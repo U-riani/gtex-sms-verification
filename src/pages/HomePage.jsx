@@ -15,7 +15,7 @@ import {BRAND_NAMES} from "../data/brands";
 
 
 const HomePage = () => {
-  const baseURL = "https://gtex-sms-verification-server-b56rj7jaj-u-rianis-projects.vercel.app";
+  const baseURL = "https://gtex-sms-verification-server-lcrbftmui-u-rianis-projects.vercel.app";
   // const baseURL = "http://localhost:5000";
   const initialFields = {
     brands: [],
@@ -305,7 +305,7 @@ const HomePage = () => {
       });
 
       const data = await res.json();
-
+console.log(data);
       if (!data.success) {
         setErrors((prev) => ({
           ...prev,
