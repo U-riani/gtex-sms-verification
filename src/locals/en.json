@@ -1,0 +1,60 @@
+{
+  "smsVerification": "SMS VERIFICATION",
+  "registrationForm": "Registration Form",
+  "chooseBrand": "Choose Brand(s)",
+  "gender": "Gender",
+  "female": "Female",
+  "male": "Male",
+  "other": "Other",
+
+  "firstName": "First Name",
+  "lastName": "Last Name",
+  "birthDate": "Birth Date",
+  "address": "Address",
+  "zipCode": "ZIP Code",
+  "city": "City",
+  "country": "Country",
+
+  "cardNumber": "Card Number",
+  "email": "Email",
+  "mobile": "Mobile",
+  "verificationCode": "Verification Code",
+
+  "receiveNews": "I wish to receive Kiabi news",
+  "bySms": "By SMS",
+  "byEmail": "By Email",
+  "yes": "Yes",
+  "no": "No",
+
+  "termsAgreeText": "I read and agree to",
+  "termsAndConditions": "terms and conditions",
+
+  "clear": "Clear",
+  "submit": "Submit",
+  "sending": "Sending...",
+  "successTitle": "Submission Successful",
+  "successMessage": "Your data has been successfully submitted.",
+  "ok": "OK",
+
+  "requiredFieldsError": "Please fill in the required fields.",
+  "codeSent": "Code sent",
+  "codeInvalid": "Invalid code",
+  "codeValid": "Code verified",
+  "resendIn": "Resend in",
+  "getCode": "Code",
+  "verify": "Verify",
+
+  "pleaseSelectGender": "Please Select Gender",
+  "pleaseSelectBrand": "Please Select Brand",
+
+  "termsRule1": "By agreeing to the Terms and Conditions, you grant permission to LLC GTEX, Reg. No. 205234744, Legal Address: Tbilisi, Mukhran Machavariani 4B, Actual Address: Tbilisi, Mukhran Machavariani 4B, Email: info@gtex.ge, to:",
+  "termsRule1_2": "In accordance with the legislation, collect, store and process personal data for the purpose(s) defined in these Terms and Conditions.",
+  "termsRule2": "Personal data is defined as:\nName\nPhone number\nPersonal ID number (if necessary)\nThe collection, storage and processing of personal data by LLC GTEX is carried out for marketing purposes, service improvement, sharing information with the customer and sending offers.",
+  "termsRule3": "Data storage/processing:\nThe user's personal data is stored in data repositories owned by LLC GTEX, which may be physical or cloud servers.\nLLC GTEX is the person responsible for data processing.",
+  "termsRule4": "An authorized person may also be another company with which LLC GTEX has agreed on confidentiality obligations.",
+  "termsRule5": "By registering in the system, you agree that LLC GTEX, Reg. No. 205234744, may receive, store and process information related to offers, promotional content and direct marketing purposes.",
+  "termsRule6": "The company is authorized to store the information collected under the Terms and Conditions for a period of 10 (ten) years.",
+  "termsRule7": "The user has the right to request information at any time about their personal data stored by the company.",
+  "termsRule7_1": "The user may submit a request via the LLC GTEX hotline: 0032 2 920 777 or in writing via email: info@gtex.ge.",
+  "termsRule7_2": "Each SMS message includes an SMS NO option “Refuse SMS notifications”, therefore the user may opt out of SMS notifications."
+}
