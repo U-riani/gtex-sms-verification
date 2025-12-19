@@ -5,6 +5,7 @@ function App() {
   return (
     <>
       <Routes>
+        <Route path="/:activeBrandName" element={<HomePage />} />
         <Route path="/" element={<HomePage />} />
       </Routes>
     </>

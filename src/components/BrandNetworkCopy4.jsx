@@ -9,7 +9,8 @@ export default function BrandNetwork({
   const PULSE_DELAY = 100; // 0.2s
   const PULSE_DURATION = 100; // matches CSS animation
   const WAVE_STEP = 60;
-
+  const CONTAINER_WIDTH = 500; // matches your max-w-[500px]
+  const CONTAINER_HEIGHT = 300; // matches your fixed h-[300px]
   const containerRef = useRef(null);
 
   const [width, setWidth] = useState(0);
@@ -180,7 +181,7 @@ export default function BrandNetwork({
           maxRadius
         );
 
-        const x = centerX + Math.cos(angle) * radius ;
+        const x = centerX + Math.cos(angle) * radius;
         const y = centerY + Math.sin(angle) * radius;
 
         // Brand scale
@@ -297,7 +298,7 @@ export default function BrandNetwork({
                   : "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.76) 0%, transparent 50%),rgba(104, 220, 255, 0.03)"
               }
     `,
-              
+
               border: "1px solid rgba(255, 255, 255, 1)",
               boxShadow: `
       inset 0 4px 12px rgba(255, 255, 255, 1),
@@ -337,8 +338,8 @@ export default function BrandNetwork({
                   background: active
                     ? "rgba(190, 190, 255, 0.01)"
                     : "rgba(252, 252, 255, 0.13)",
-                  boxShadow: active 
-                    ? "0 0 40px rgba(29, 153, 255, 0.67)" 
+                  boxShadow: active
+                    ? "0 0 40px rgba(180,180,200,0.8)"
                     : "0 0 15px rgba(0,0,0,0.2)",
                 }}
               >

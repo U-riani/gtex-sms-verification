@@ -7,16 +7,18 @@ import { useTranslation } from "react-i18next";
 import LanguageButton from "../components/LanguageButton";
 import { regions } from "../data/regions";
 import { countries } from "../data/countries";
-import { brands } from "../data/brands";
+// import { brands } from "../data/brands";
 import { phonePrefixes } from "../data/phoneNumberPrefixes";
 import { getCountryName, getCountryOptions } from "../utils/countryHelpers";
 import BrandNetwork from "../components/BrandNetwork";
-import {BRAND_NAMES} from "../data/brands";
-
+import { BRAND_NAMES } from "../data/brands";
+import { useParams } from "react-router-dom";
 
 const HomePage = () => {
-  const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  // const baseURL = "http://localhost:5000";
+  // const baseURL = "https://gtex-sms-verification-server.vercel.app";
+  const baseURL = "http://localhost:5000";
+  const { activeBrandName } = useParams();
+
   const initialFields = {
     brands: [],
     gender: "",
@@ -31,7 +33,7 @@ const HomePage = () => {
     promotionChanel1: true, // will be "true" or "false"
     promotionChanel2: true, // will be "true" or "false"
     termsAccepted: false,
-    branch: "tbilisi",
+    branch: "",
     prefix: "+995",
   };
 
@@ -65,45 +67,19 @@ const HomePage = () => {
     agree: React.useRef(null),
   };
 
-  const allBrandIds = brands.map((b) => b.id);
+  // const allBrandIds = brands.map((b) => b.id);
 
-  const toggleAllBrands = () => {
-    setFieldsData((prev) => ({
-      ...prev,
-      brands: prev.brands.length === allBrandIds.length ? [] : allBrandIds,
-    }));
-  };
+  // const toggleAllBrands = () => {
+  //   setFieldsData((prev) => ({
+  //     ...prev,
+  //     brands: prev.brands.length === allBrandIds.length ? [] : allBrandIds,
+  //   }));
+  // };
 
-  useEffect(() => {
-    
-  }, []);
 
   useEffect(() => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const lat = coords.latitude;
-        const lon = coords.longitude;
-
-        // Rough example branch zones
-        if (lat > 41.65 && lon > 44.7) {
-          // Tbilisi area
-          setFieldsData((prev) => ({ ...prev, branch: "tbilisi" }));
-        } else if (lat > 41.6 && lon < 41.7) {
-          // Batumi-ish area
-          setFieldsData((prev) => ({ ...prev, branch: "batumi" }));
-        } else {
-          // Default fallback
-          setFieldsData((prev) => ({ ...prev, branch: "tbilisi" }));
-        }
-      },
-      (err) => {
-        console.warn("Branch auto-detect blocked:", err);
-      },
-      { enableHighAccuracy: true }
-    );
-  }, []);
+    setFieldsData((prev) => ({ ...prev, branch: activeBrandName }));
+  }, [activeBrandName]);
 
   console.log(fieldsData.brands);
   const toggleBrandFromNetwork = (name) => {
@@ -228,16 +204,16 @@ const HomePage = () => {
     }));
   };
 
-  const toggleBrand = (brandId) => {
-    setErrors((prev) => ({ ...prev, brands: undefined }));
+  // const toggleBrand = (brandId) => {
+  //   setErrors((prev) => ({ ...prev, brands: undefined }));
 
-    setFieldsData((prev) => ({
-      ...prev,
-      brands: prev.brands.includes(brandId)
-        ? prev.brands.filter((b) => b !== brandId)
-        : [...prev.brands, brandId],
-    }));
-  };
+  //   setFieldsData((prev) => ({
+  //     ...prev,
+  //     brands: prev.brands.includes(brandId)
+  //       ? prev.brands.filter((b) => b !== brandId)
+  //       : [...prev.brands, brandId],
+  //   }));
+  // };
 
   const handleClear = () => {
     setFieldsData({ ...initialFields });
@@ -263,8 +239,8 @@ const HomePage = () => {
       if (!raw) {
         setErrors((prev) => ({
           ...prev,
-          phoneNumber: "Please enter phone number",
-          verificationCode: "First enter valid phone number",
+          phoneNumber: t("PleaseEnterYourMobile"),
+          verificationCode: t("PleaseEnterValidMobile"),
         }));
         return;
       }
@@ -281,14 +257,14 @@ const HomePage = () => {
       if (!isValidPhoneLength(raw)) {
         setErrors((prev) => ({
           ...prev,
-          phoneNumber: "Enter a valid phone number",
-          verificationCode: "First enter valid phone number",
+          phoneNumber: t("PleaseEnterValidMobile"),
+          verificationCode: t("PleaseEnterValidMobile"),
         }));
         return;
       }
 
       // VALID — show info message
-      setInfoMessage(`Verification code was sent to ${formattedPhone}`);
+      setInfoMessage(`${t("verificationCodeSent")} ${formattedPhone}`);
       setErrors((prev) => ({
         ...prev,
         verificationCode: undefined,
@@ -305,12 +281,16 @@ const HomePage = () => {
       });
 
       const data = await res.json();
-console.log(data);
+      console.log(data);
       if (!data.success) {
         setErrors((prev) => ({
           ...prev,
-          phoneNumber: data.error || "Couldn't send code",
+          phoneNumber:
+            data.error === "Invalid Code"
+              ? t("invalidCode")
+              : t("couldNotSendCode"),
         }));
+        console.error("OTP send error:", data.error);
         return;
       }
 
@@ -324,7 +304,7 @@ console.log(data);
       // alert("ვერ გაიგზავნა კოდი");
       setErrors((prev) => ({
         ...prev,
-        phoneNumber: "Network error sending OTP",
+        phoneNumber: t("networkError"),
       }));
     } finally {
       setSendingCode(false);
@@ -344,7 +324,7 @@ console.log(data);
     if (!isValidPhoneLength(raw)) {
       setErrors((prev) => ({
         ...prev,
-        phoneNumber: "Please first insert correct mobile number",
+        phoneNumber: t("PleaseEnterValidMobile"),
       }));
 
       return;
@@ -384,13 +364,16 @@ console.log(data);
       // OTP incorrect
       setErrors((prev) => ({
         ...prev,
-        verificationCode: data.message || "The verification code is incorrect.",
+        verificationCode:
+          data.message === "Invalid code"
+            ? t("invalidCode")
+            : t("couldNotSendCode"),
       }));
     } catch (err) {
       console.error(err);
       setErrors((prev) => ({
         ...prev,
-        verificationCode: "Verification failed — try again.",
+        verificationCode: t("couldNotSendCode"),
       }));
     } finally {
       setVerifyingCode(false);
@@ -406,17 +389,20 @@ console.log(data);
     const newErrors = {};
     console.log(fieldsData);
     if (!fieldsData.brands || fieldsData.brands.length === 0) {
-      newErrors.brands = "select Brand";
+      newErrors.brands = t("chooseBrand");
     }
 
-    if (!fieldsData.gender) newErrors.gender = "select gender";
-    if (fieldsData.brands.length == 0) newErrors.brands = "select brand";
-    if (!fieldsData.firstName.trim()) newErrors.firstName = "enter first name";
-    if (!fieldsData.lastName.trim()) newErrors.lastName = "enter last name";
-    if (!fieldsData.dateOfBirth) newErrors.dateOfBirth = "enter birth date";
-    if (!fieldsData.city) newErrors.city = "select city";
-    if (!fieldsData.country) newErrors.country = "select country";
-
+    if (!fieldsData.gender) newErrors.gender = t("PleaseEnterYourGender");
+    if (fieldsData.brands.length == 0)
+      newErrors.brands = t("pleaseSelectBrand");
+    if (!fieldsData.firstName.trim())
+      newErrors.firstName = t("PleaseEnterYourFirstName");
+    if (!fieldsData.lastName.trim())
+      newErrors.lastName = t("PleaseEnterYourLastName");
+    if (!fieldsData.dateOfBirth)
+      newErrors.dateOfBirth = t("PleaseEnterYourBirthDate");
+    if (!fieldsData.city) newErrors.city = t("PleaseEnterYourCity");
+    if (!fieldsData.country) newErrors.country = t("PleaseEnterYourCountry");
     //// Normalize phone for submit
     // const formattedPhone = normalizePhone(
     //   fieldsData.phoneNumber,
@@ -425,22 +411,24 @@ console.log(data);
 
     /// PHONE NUMBER VALIDATION
     if (!fieldsData.phoneNumber.trim()) {
-      newErrors.phoneNumber = "Please enter phone number";
+      newErrors.phoneNumber = t("PleaseEnterYourMobile");
     } else if (!isValidPhoneLength(fieldsData.phoneNumber)) {
-      newErrors.phoneNumber = "Enter a valid phone number";
+      newErrors.phoneNumber = t("PleaseEnterValidMobile");
     }
 
     // VERIFICATION CHECK
     if (!isVerified) {
-      newErrors.verificationCode = "verify phone";
+      newErrors.verificationCode = t("pleaseVerifyCode");
     }
-    if (!fieldsData.termsAccepted) newErrors.termsAccepted = "accept terms";
+    if (!fieldsData.termsAccepted)
+      newErrors.termsAccepted = t("PleaseAgreeToTerms");
 
     if (fieldsData.email && !isValidEmail(fieldsData.email.trim())) {
-      newErrors.email = "Enter a valid email";
+      newErrors.email = t("PleaseEnterYourEmail");
     }
 
     setErrors(newErrors);
+    console.log("Branch name", fieldsData.branch);
 
     // If errors exist → scroll to first one
     if (Object.keys(newErrors).length > 0) {
@@ -465,7 +453,7 @@ console.log(data);
         fieldsData.phoneNumber,
         fieldsData.prefix || "+995"
       );
-
+      console.log(fieldsData.branch);
       const req = await fetch(`${baseURL}/api/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -485,7 +473,6 @@ console.log(data);
           branch: fieldsData.branch,
         }),
       });
-      console.log(fieldsData.termsAccepted);
 
       const resData = await req.json();
 
@@ -503,7 +490,7 @@ console.log(data);
   };
 
   return (
-    <div className="relative">
+    <div className="relative ">
       <LanguageButton />
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
@@ -595,8 +582,8 @@ console.log(data);
         </div>
       )}
       <div className="w-full bg-[#f8f9fa] py-4 sm:py-10 px-3">
-        <div className="flex flex-col items-center">
-          <div className="flex flex-col gap-5 md:gap-10 bg-[#fff] rounded  p-5 sm:p-7  xl:p-10 border border-slate-300 rounded shadow-2xl">
+        <div className="flex flex-col items-center ">
+          <div className="flex flex-col gap-5 md:gap-10 bg-cyan-100/10 rounded  p-5 sm:p-7  xl:p-10 border border-slate-300 rounded shadow-2xl">
             {/* <div className="flex justify-center items-center">
               <div>
                 <img
@@ -608,7 +595,17 @@ console.log(data);
             </div> */}
             <div>
               <form
-                className="flex flex-col gap-4 bg-[#fff] font-Roboto w-full max-w-[800px] p-5 sm:p-7 xl:p-10 shadow-xl border border-neutral-200 rounded "
+                className="flex flex-col gap-4 bg-[#fff] font-Roboto w-full max-w-[800px] p-5 sm:p-7 xl:p-10 shadow-xl shadow-slate-900/30 border border-neutral-200 rounded "
+                style={{
+                  background: `
+    linear-gradient(to bottom,
+      rgba(129, 193, 253, 0.23) 0%,
+      rgba(200, 224, 255, 0.41) 30%,
+      rgba(187, 231, 248, 0.2) 70%,
+      transparent 100%
+    )
+  `,
+                }}
                 onSubmit={handleSubmit}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && e.target.tagName !== "TEXTAREA") {
@@ -617,22 +614,22 @@ console.log(data);
                 }}
               >
                 <div className="mb-5">
-                  <h5 className="text-2xl text-[#040037] text-center font-bold uppercase-like">
+                  <h5 className="text-2xl text-[#242223] text-center font-bold uppercase-like">
                     {t("smsVerification")}
                   </h5>
 
-                  <p className="text-center font text-slate-600">
+                  <p className="text-center font text-[#242223]/40">
                     {t("registrationForm")}
                   </p>
                 </div>
-                <div ref={fieldRefs.brands}>
+                <div ref={fieldRefs.brands} className="flex flex-col gap-3">
                   <div>
-                    <p className="text-[#040037] font-bold">
+                    <p className="text-[#242223] font-bold">
                       {t("chooseBrand")} *
                     </p>
                     {errors.brands && (
-                      <p className="text-red-600 text-sm">
-                        {errors.brands || "Please select at least one brand"  }
+                      <p className="text-pink-600 text-sm">
+                        {errors.brands || "Please select at least one brand"}
                       </p>
                     )}
                   </div>
@@ -688,7 +685,7 @@ console.log(data);
                   </div>
                 </div> */}
 
-                <div className="flex flex-col gap-2" ref={fieldRefs.gender}>
+                {/* <div className="flex flex-col gap-2" ref={fieldRefs.gender}>
                   <div>
                     <p className="text-[#040037] font-bold">{t("gender")}: *</p>
                     {errors.gender && (
@@ -697,8 +694,8 @@ console.log(data);
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-row justify-around rounded border-gray-400 bg-gray-400">
-                    {["female", "male", "other"].map((g, i) => {
+                  <div className="flex flex-row justify-around rounded border-gray-400 bg-transparent">
+                    {["female", "male"].map((g, i) => {
                       const isActive = fieldsData.gender === g;
 
                       return (
@@ -715,14 +712,12 @@ console.log(data);
                               target: { name: "gender", value: g },
                             });
                           }}
-                          className={`px-4 py-2 font-medium transition-all flex-1 border cursor-pointer
-            ${i === 0 ? "rounded-l" : ""}
-            ${i === 2 ? "rounded-r" : ""}
-            ${
-              isActive
-                ? "bg-[#040037] border text-white shadow border-[#040037]"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-gray-400"
-            }`}
+                          className={`px-4 py-2 font-medium flex-1 cursor-pointer
+    border border-4 border-white/30
+    ${isActive ? "gender-btn-active bg-indigo-300/80" : ""}
+    ${i === 0 ? "rounded-l" : ""}
+    ${i === 1 ? "rounded-r" : ""}
+  `}
                         >
                           {g === "female"
                             ? t("female")
@@ -733,8 +728,58 @@ console.log(data);
                       );
                     })}
                   </div>
-                </div>
+                </div> */}
+                <div className="flex flex-col gap-2" ref={fieldRefs.gender}>
+                  <div>
+                    <p className="text-[#242223] font-bold">{t("gender")}: *</p>
+                    {errors.gender && (
+                      <p className="text-pink-600 text-sm mt-1">
+                        {t("PleaseEnterYourGender") || "Please select gender"}
+                      </p>
+                    )}
+                  </div>
 
+                  {/* Full glass panel with shimmer — exactly like your test */}
+                  <div className="relative overflow-hidden rounded-xl bg-white/50 backdrop-blur-xl border border-white/30">
+                    {/* Moving shimmer effect */}
+                    <div className="absolute inset-0 pointer-events-none shimmer"></div>
+
+                    {/* Two gender buttons inside the glass */}
+                    <div className="relative bg-transparent flex gap-1 p-2">
+                      {["female", "male"].map((g) => {
+                        const isActive = fieldsData.gender === g;
+
+                        return (
+                          <button
+                            key={g}
+                            type="button"
+                            onClick={() => {
+                              setErrors((prev) => ({
+                                ...prev,
+                                gender: undefined,
+                              }));
+                              handleChange({
+                                target: { name: "gender", value: g },
+                              });
+                            }}
+                            className={`
+              flex-1 py-2 font-semibold text-lg transition-all duration-500 rounded cursor-pointer 
+              ${
+                isActive
+                  ? "bg-[#3d97cc]/20  z-10 text-slate-800/80 hover:bg-sky-600/30"
+                  : "bg-transparent text-slate-600/80 hover:bg-slate-400/20"
+              }
+            `}
+                          >
+                            <span className="relative z-10">
+                              {g === "female" ? t("female") : t("male")}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
                 <div className="flex flex-col gap-4 md:flex-row ">
                   <div
                     className="flex flex-col justify-end gap-2 md:w-[150px] "
@@ -742,13 +787,13 @@ console.log(data);
                   >
                     <label
                       htmlFor="firstName"
-                      className="text-[#040037] font-bold"
+                      className="text-[#242223] font-bold"
                     >
                       {t("firstName")} *
                     </label>
                     {errors.firstName && (
                       <p className="text-red-600 text-sm">
-                        Please enter your first name
+                        {t("PleaseEnterYourFirstName")}
                       </p>
                     )}
 
@@ -756,7 +801,7 @@ console.log(data);
                       id="firstName"
                       name="firstName"
                       type="text"
-                      className="border px-2 py-1 rounded border-gray-400"
+                      className="border px-2 py-1 rounded border-[#242223]/40"
                       value={fieldsData.firstName}
                       onChange={handleChange}
                     />
@@ -767,13 +812,13 @@ console.log(data);
                   >
                     <label
                       htmlFor="lastName"
-                      className="text-[#040037] font-bold"
+                      className="text-[#242223] font-bold"
                     >
                       {t("lastName")} *
                     </label>
                     {errors.lastName && (
                       <p className="text-red-600 text-sm">
-                        Please enter your last name
+                        {t("PleaseEnterYourLastName")}
                       </p>
                     )}
 
@@ -781,7 +826,7 @@ console.log(data);
                       id="lastName"
                       name="lastName"
                       type="text"
-                      className="border px-2 py-1 rounded border-gray-400"
+                      className="border px-2 py-1 rounded border-[#242223]/40 ring-0"
                       value={fieldsData.lastName}
                       onChange={handleChange}
                     />
@@ -793,19 +838,19 @@ console.log(data);
                 >
                   <label
                     htmlFor="dateOfBirth"
-                    className="text-[#040037] font-bold"
+                    className="text-[#242223] font-bold"
                   >
                     {t("birthDate")} *
                   </label>
                   {errors.dateOfBirth && (
                     <p className="text-red-600 text-sm">
-                      Please enter your birth Date
+                      {t("PleaseEnterYourBirthDate")}
                     </p>
                   )}
 
                   <input
                     id="dateOfBirth"
-                    className="border rounded px-2 py-1 border-gray-400"
+                    className="border rounded px-2 py-1 border-gray-400 text-[#242223] cursor-pointer"
                     name="dateOfBirth"
                     type="date"
                     value={fieldsData.dateOfBirth}
@@ -821,11 +866,13 @@ console.log(data);
                     className="flex flex-col flex-1 gap-2"
                     ref={fieldRefs.city}
                   >
-                    <label htmlFor="city" className="text-[#040037] font-bold">
+                    <label htmlFor="city" className="text-[#242223] font-bold">
                       {t("city")} *
                     </label>
                     {errors.city && (
-                      <p className="text-red-600 text-sm">Please select city</p>
+                      <p className="text-red-600 text-sm">
+                        {t("PleaseEnterYourCity")}
+                      </p>
                     )}
 
                     {/* <input
@@ -853,12 +900,12 @@ console.log(data);
                   </div>
                 </div>
                 <div className="flex flex-col gap-2" ref={fieldRefs.country}>
-                  <label htmlFor="country" className="text-[#040037] font-bold">
+                  <label htmlFor="country" className="text-[#242223] font-bold">
                     {t("country")} *
                   </label>
                   {errors.country && (
                     <p className="text-red-600 text-sm">
-                      Please select country
+                      {t("PleaseEnterYourCountry")}
                     </p>
                   )}
 
@@ -880,7 +927,7 @@ console.log(data);
 
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col gap-2">
-                    <label htmlFor="email" className="text-[#040037] font-bold">
+                    <label htmlFor="email" className="text-[#242223] font-bold">
                       {t("email")}
                     </label>
                     {errors.email && (
@@ -891,7 +938,7 @@ console.log(data);
                     id="email"
                     name="email"
                     type="email"
-                    className="border px-2 py-1 rounded flex-1 border-gray-400"
+                    className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
                     value={fieldsData.email}
                     onChange={handleChange}
                   />
@@ -902,7 +949,7 @@ console.log(data);
                 >
                   <label
                     htmlFor="phoneNumber"
-                    className="text-[#040037] font-bold"
+                    className="text-[#242223] font-bold"
                   >
                     {t("mobile")} *
                   </label>
@@ -911,7 +958,7 @@ console.log(data);
                   )}
                   <div className="flex gap-4">
                     <select
-                      className="border px-1 py-1 rounded border-gray-400 bg-white"
+                      className="text-[#242223] border px-1 py-1 rounded border-gray-400 cursor-pointer"
                       value={fieldsData.prefix || "+995"}
                       onChange={(e) =>
                         handleChange({
@@ -929,7 +976,7 @@ console.log(data);
                       id="phoneNumber"
                       name="phoneNumber"
                       type="Tel"
-                      className="border px-2 py-1 rounded flex-1 border-gray-400"
+                      className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
                       placeholder="ex: 555 12 34 56"
                       value={fieldsData.phoneNumber}
                       onChange={handleChange}
@@ -942,7 +989,7 @@ console.log(data);
                   ref={fieldRefs.verificationCode}
                 >
                   <div className="flex flex-col gap-2">
-                    <p className="text-[#040037] font-bold">
+                    <p className="text-[#242223] font-bold">
                       {t("verificationCode")} *
                     </p>
                     {errors.verificationCode && (
@@ -961,7 +1008,7 @@ console.log(data);
                       type="text"
                       value={fieldsData.verificationCode}
                       onChange={handleChange}
-                      className={`border px-2 py-1 rounded flex-1
+                      className={`border px-2 py-1 rounded flex-1 text-[#242223]
                       ${
                         isVerified
                           ? "border-green-500"
@@ -981,7 +1028,7 @@ console.log(data);
     ${
       cooldown > 0 || sendingCode
         ? "bg-gray-400 cursor-not-allowed"
-        : "bg-[#040037]"
+        : "bg-[#3d97cc]/60 hover:bg-[#3d97cc]/90 cursor-pointer"
     }`}
                       >
                         {sendingCode
@@ -998,11 +1045,11 @@ console.log(data);
                         type="button"
                         disabled={verifyingCode}
                         onClick={handleVerifyCode}
-                        className={`px-5 py-1 rounded text-white 
+                        className={`px-5 py-1 rounded text-white cursor-pointer
     ${
       verifyingCode
         ? "bg-gray-400 cursor-not-allowed"
-        : "bg-green-600 hover:bg-green-700"
+        : "bg-green-600/70 hover:bg-green-700/70"
     }`}
                       >
                         {verifyingCode
@@ -1016,7 +1063,7 @@ console.log(data);
                       <button
                         type="button"
                         disabled
-                        className="px-5 py-1 rounded bg-gray-300 text-gray-600 cursor-not-allowed"
+                        className="px-5 py-1 rounded bg-emerald-500/30 text-gray-600 cursor-not-allowed"
                       >
                         {t("verified")}{" "}
                         <span className="text-green-400">✔</span>
@@ -1024,135 +1071,17 @@ console.log(data);
                     )}
                   </div>
                 </div>
-                {/* <div className="flex flex-col gap-2">
-                  <p htmlFor="" className="text-[#040037] font-bold">
-                    {t("receiveNews")}:
-                  </p>
-                  <div className="flex flex-col items-start justify-center gap-3">
-                    <div
-                      className="flex flex-col items-start gap-3"
-                      ref={fieldRefs.promotionChanel1}
-                    >
-                      {errors.promotionChanel1 && (
-                        <p className="text-red-600 text-sm">Please select</p>
-                      )}
-                      <div className="flex items-center gap-3">
-                        <p>{t("bySms")}:</p>
 
-                        <div className="flex flex-row gap-2">
-                          <label htmlFor="promotionChanel1-yes">
-                            {t("yes")}
-                          </label>
-                          <input
-                            id="promotionChanel1-yes"
-                            type="radio"
-                            name="promotionChanel1"
-                            value="true"
-                            checked={fieldsData.promotionChanel1 === true}
-                            onChange={(e) => {
-                              setErrors((prev) => ({
-                                ...prev,
-                                promotionChanel1: undefined,
-                              }));
-
-                              setFieldsData((prev) => ({
-                                ...prev,
-                                promotionChanel1: e.target.value === "true",
-                              }));
-                            }}
-                          />
-                        </div>
-
-                        <div className="flex flex-row gap-2">
-                          <label htmlFor="promotionChanel1-no">{t("no")}</label>
-                          <input
-                            id="promotionChanel1-no"
-                            type="radio"
-                            name="promotionChanel1"
-                            value="false"
-                            checked={fieldsData.promotionChanel1 === false}
-                            onChange={(e) => {
-                              setErrors((prev) => ({
-                                ...prev,
-                                promotionChanel1: undefined,
-                              }));
-
-                              setFieldsData((prev) => ({
-                                ...prev,
-                                promotionChanel1:
-                                  e.target.value === "true" ? true : false,
-                              }));
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      className="flex flex-col items-start gap-3"
-                      ref={fieldRefs.promotionChanel2}
-                    >
-                      {errors.promotionChanel2 && (
-                        <p className="text-red-600 text-sm">Please select</p>
-                      )}
-                      <div className="flex flex-row items-start gap-3">
-                        <p>{t("byEmail")}:</p>
-
-                        <div className="flex flex-row gap-2">
-                          <label htmlFor="promotionChanel2-yes">
-                            {t("yes")}
-                          </label>
-                          <input
-                            id="promotionChanel2-yes"
-                            type="radio"
-                            name="promotionChanel2"
-                            value="true"
-                            checked={fieldsData.promotionChanel2 === true}
-                            onChange={(e) => {
-                              setErrors((prev) => ({
-                                ...prev,
-                                promotionChanel2: undefined,
-                              }));
-
-                              setFieldsData((prev) => ({
-                                ...prev,
-                                promotionChanel2: e.target.value === "true",
-                              }));
-                            }}
-                          />
-                        </div>
-
-                        <div className="flex flex-row gap-2">
-                          <label htmlFor="promotionChanel2-no">{t("no")}</label>
-                          <input
-                            id="promotionChanel2-no"
-                            type="radio"
-                            name="promotionChanel2"
-                            value="false"
-                            checked={fieldsData.promotionChanel2 === false}
-                            onChange={(e) => {
-                              setErrors((prev) => ({
-                                ...prev,
-                                promotionChanel2: undefined,
-                              }));
-                              setFieldsData((prev) => ({
-                                ...prev,
-                                promotionChanel2:
-                                  e.target.value === "true" ? true : false,
-                              }));
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div> */}
                 <div className="flex flex-col gap-2">
                   {errors.termsAccepted && (
-                    <p className="text-red-600 text-sm">Please mark agree</p>
+                    <p className="text-red-600 text-sm">
+                      {t("PleaseAgreeToTerms")}
+                    </p>
                   )}
                   <div className="flex flex-row items-center gap-2">
                     <input
                       type="checkbox"
+                      className="cursor-pointer"
                       checked={fieldsData.termsAccepted}
                       onChange={(e) => {
                         setErrors((prev) => ({
@@ -1166,10 +1095,10 @@ console.log(data);
                       }}
                     />
 
-                    <p className="text-[#040037] font-bold">
+                    <p className="text-[#242223] font-bold">
                       {t("termsAgreeText")}
                       <span
-                        className="text-[#040037]/60 cursor-pointer underline ps-1"
+                        className="text-[#242223]/60 cursor-pointer underline ps-1 hover:text-blue-600/50"
                         onClick={handleShowTerms}
                         id="open-terms"
                       >
@@ -1181,7 +1110,7 @@ console.log(data);
                 <div className="flex flex-row gap-2">
                   <button
                     type="button"
-                    className="bg-slate-300 py-2 px-3 rounded"
+                    className="bg-[#3d97cc]/30 py-2 px-3 rounded text-slate-500 hover:bg-[#3d97cc]/50  cursor-pointer"
                     onClick={handleClear}
                   >
                     {t("clear")}
@@ -1189,8 +1118,7 @@ console.log(data);
 
                   <button
                     type="submit"
-                    className="bg-[#040037] py-2 px-3 rounded flex-1 text-slate-50 disabled:bg-gray-400"
-                    
+                    className="bg-slate-700/60 py-2 px-3 rounded flex-1 text-slate-50 hover:bg-slate-800/90 disabled:bg-gray-400 cursor-pointer"
                   >
                     {loading ? `${t("sending")}` : `${t("submit")}`}
                   </button>

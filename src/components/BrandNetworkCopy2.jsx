@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { brandsWithAngle } from "../data/brands";
 
-export default function BrandNetwork({
+export default function BrandNetworkCopy2({
   selectedBrands = [],
   onToggleBrand,
   onToggleAll,
@@ -180,11 +180,11 @@ export default function BrandNetwork({
           maxRadius
         );
 
-        const x = centerX + Math.cos(angle) * radius ;
+        const x = centerX + Math.cos(angle) * radius;
         const y = centerY + Math.sin(angle) * radius;
 
         // Brand scale
-        const scale = 1 + Math.sin(t * 1.5 + i) * 0.1;
+        const scale = 1 + Math.sin(t * 1.5 + i) * 0.06;
 
         const btn = brandRefs.current[i];
         if (btn) {
@@ -232,17 +232,7 @@ export default function BrandNetwork({
   return (
     <div
       ref={containerRef}
-      className="w-full max-w-[500px] mx-auto relative h-[300px] "
-      style={{
-        background: `
-    radial-gradient(circle at center,
-      rgba(230, 220, 255, 0.4) 0%,
-      rgba(210, 200, 255, 0.41) 10%,
-      rgba(232, 232, 245, 0.62) 20%,
-      transparent 100%
-    )
-  `,
-      }}
+      className="w-full max-w-[500px] mx-auto relative h-[300px]"
     >
       {width > 0 && (
         <>
@@ -260,8 +250,8 @@ export default function BrandNetwork({
                 <path
                   key={i}
                   ref={(el) => (pathRefs.current[i] = el)}
-                  stroke="rgba(255, 255, 255, 0.53)" /* Soft light purple line */
-                  strokeWidth={isActive ? "3.5" : "2.5"}
+                  stroke="#040037"
+                  strokeWidth="2"
                   fill="none"
                   style={{
                     opacity: isActive ? 1 : 0,
@@ -273,46 +263,31 @@ export default function BrandNetwork({
           </svg>
 
           {/* CENTER */}
-          {/* CENTER */}
-          {/* CENTER */}
           <button
-            type="button"
             ref={centerRef}
             onClick={handleToggleAll}
-            className={`absolute flex items-center justify-center rounded-full overflow-hidden transition-all duration-500 cursor-pointer ${
-              allSelected
-                ? "transform translate-x-2 translate-y-2 scale-110 z-10"
-                : ""
-            }`}
+            type="button"
+            className={`absolute flex items-center justify-center
+  rounded-full text-center leading-tight px-2 shadow-md
+  transition-colors duration-200 cursor-pointer
+  
+  ${allSelected ? "bg-[#040037] text-white" : "bg-gray-200 text-gray-800"}`}
             style={{
               width: height * 0.4,
               height: height * 0.4,
-              left: "50%",
-              top: "50%",
+              left: width / 2,
+              top: height / 2,
               transform: "translate(-50%, -50%)",
               willChange: "transform",
-              background: `${
-                allSelected
-                  ? "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 1) 0%, transparent 50%),rgba(191, 206, 255, 0.33)"
-                  : "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.76) 0%, transparent 50%),rgba(104, 220, 255, 0.03)"
-              }
-    `,
-              
-              border: "1px solid rgba(255, 255, 255, 1)",
-              boxShadow: `
-      inset 0 4px 12px rgba(255, 255, 255, 1),
-      inset 0 -4px 8px rgba(255, 255, 255, 1),
-      0 0 40px rgba(180, 180, 240, ${allSelected ? 0.8 : 0.5})
-    `,
             }}
           >
-            <img
-              src="Gtex-logo.png"
-              alt="All Brands"
-              className="w-full h-full object-contain p-6 "
-            />
+            {/* <span className={allSelected ? "text-white" : "text-red-600"}>
+              G
+            </span>
+            tex */}
+            <img src="Gtex-logo.png" alt="All Brands" className="w-full object-cover" />
           </button>
-          {/* BRANDS */}
+
           {/* BRANDS */}
           {brandsWithAngle.map((b, i) => {
             const active = selectedBrands.includes(b.name);
@@ -323,8 +298,12 @@ export default function BrandNetwork({
                 key={b.name}
                 ref={(el) => (brandRefs.current[i] = el)}
                 onClick={() => handleToggleBrand(i, b.name)}
-                className={`absolute flex items-center justify-center px-1 rounded-full shadow-2xl  border border-white/30 transition-all duration-400 cursor-pointer 
-                  ${active ? "ring-8 ring-purple/40" : ""}`}
+                className={`absolute flex items-center justify-center
+  rounded-full text-center leading-tight px-1 shadow-md
+  transition-colors duration-200 cursor-pointer
+  ${active ? "brand-active" : "brand-inactive"}
+
+`}
                 style={{
                   width: height * 0.3,
                   height: height * 0.3,
@@ -333,20 +312,11 @@ export default function BrandNetwork({
                   top: 0,
                   transform: "translate(-50%, -50%)",
                   willChange: "transform",
-                  "--index": i,
-                  background: active
-                    ? "rgba(190, 190, 255, 0.01)"
-                    : "rgba(252, 252, 255, 0.13)",
-                  boxShadow: active 
-                    ? "0 0 40px rgba(29, 153, 255, 0.67)" 
-                    : "0 0 15px rgba(0,0,0,0.2)",
+                  "--index": i, // For wave effect delay
                 }}
               >
-                <img
-                  src={b.image}
-                  alt={b.name}
-                  className="w-full object-cover"
-                />
+                <img src={b.image} alt={b.name} className="w-full object-cover" />
+                {/* {b.name} */}
               </button>
             );
           })}
