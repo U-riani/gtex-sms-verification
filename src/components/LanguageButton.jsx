@@ -4,8 +4,10 @@ const LanguageButton = () => {
   const { i18n } = useTranslation();
 
   const toggleLanguage = () => {
-    const newLang = i18n.language === "ka" ? "en" : "ka";
+    const newLang =
+      i18n.language === "ka" ? "en" : i18n.language === "en" ? "ru" : "ka";
     i18n.changeLanguage(newLang);
+    console.log(i18n.language);
   };
 
   return (
@@ -16,7 +18,7 @@ const LanguageButton = () => {
       >
         {/* Show current language flag */}
         <img
-          src={i18n.language === "ka" ? "ka.png" : "uk.png"}
+          src={`${i18n.language}.png`}
           alt="LANG"
           className="w-full h-full object-cover rounded opacity-70"
         />

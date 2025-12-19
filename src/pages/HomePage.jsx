@@ -15,8 +15,8 @@ import { BRAND_NAMES } from "../data/brands";
 import { useParams } from "react-router-dom";
 
 const HomePage = () => {
-  // const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  const baseURL = "http://localhost:5000";
+  const baseURL = "https://gtex-sms-verification-server.vercel.app";
+  // const baseURL = "http://localhost:5000";
   const { activeBrandName } = useParams();
 
   const initialFields = {
@@ -75,7 +75,6 @@ const HomePage = () => {
   //     brands: prev.brands.length === allBrandIds.length ? [] : allBrandIds,
   //   }));
   // };
-
 
   useEffect(() => {
     setFieldsData((prev) => ({ ...prev, branch: activeBrandName }));
@@ -401,8 +400,10 @@ const HomePage = () => {
       newErrors.lastName = t("PleaseEnterYourLastName");
     if (!fieldsData.dateOfBirth)
       newErrors.dateOfBirth = t("PleaseEnterYourBirthDate");
-    if (!fieldsData.city) newErrors.city = t("PleaseEnterYourCity");
-    if (!fieldsData.country) newErrors.country = t("PleaseEnterYourCountry");
+    if (fieldsData.city === null || fieldsData.city === undefined)
+      newErrors.city = t("PleaseEnterYourCity");
+    if (fieldsData.country === null || fieldsData.country === undefined)
+      newErrors.country = t("PleaseEnterYourCountry");
     //// Normalize phone for submit
     // const formattedPhone = normalizePhone(
     //   fieldsData.phoneNumber,
