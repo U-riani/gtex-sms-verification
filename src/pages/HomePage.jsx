@@ -481,7 +481,7 @@ const HomePage = () => {
         handleClear();
         setShowSuccessModal(true);
       } else {
-        alert("რეგისტრაცია ვერ განხორციელდა");
+        alert(resData.error);
       }
     } catch (err) {
       console.log(err.message);
