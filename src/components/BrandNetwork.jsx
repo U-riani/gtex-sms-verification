@@ -3,6 +3,7 @@ import { brandsWithAngle } from "../data/brands";
 
 export default function BrandNetwork({
   selectedBrands = [],
+  lockedBrand,
   onToggleBrand,
   onToggleAll,
 }) {
@@ -21,6 +22,8 @@ export default function BrandNetwork({
   const timeRef = useRef(0);
   const rafRef = useRef(null);
   const ropeFrameRef = useRef(0);
+
+  const lockedBrandRef = useRef(null);
 
   const brandRefs = useRef([]);
   const pathRefs = useRef([]);
@@ -47,6 +50,8 @@ export default function BrandNetwork({
   };
 
   const handleToggleBrand = (index, name) => {
+    if (lockedBrandRef.current === name) return;
+
     const isSelecting = !selectedBrands.includes(name);
 
     // center pulse always (feels responsive)
@@ -111,6 +116,10 @@ export default function BrandNetwork({
       onToggleAll();
     }, PULSE_DELAY + PULSE_DURATION);
   };
+
+  useEffect(() => {
+    lockedBrandRef.current = lockedBrand;
+  }, [lockedBrand]);
 
   useEffect(() => {
     if (!pulseTarget) return;
@@ -180,7 +189,7 @@ export default function BrandNetwork({
           maxRadius
         );
 
-        const x = centerX + Math.cos(angle) * radius ;
+        const x = centerX + Math.cos(angle) * radius;
         const y = centerY + Math.sin(angle) * radius;
 
         // Brand scale
@@ -297,7 +306,7 @@ export default function BrandNetwork({
                   : "radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.76) 0%, transparent 50%),rgba(104, 220, 255, 0.03)"
               }
     `,
-              
+
               border: "1px solid rgba(255, 255, 255, 1)",
               boxShadow: `
       inset 0 4px 12px rgba(255, 255, 255, 1),
@@ -316,15 +325,20 @@ export default function BrandNetwork({
           {/* BRANDS */}
           {brandsWithAngle.map((b, i) => {
             const active = selectedBrands.includes(b.name);
-
+            const isLocked = lockedBrand === b.name;
+            console.log(lockedBrand);
             return (
               <button
                 type="button"
                 key={b.name}
                 ref={(el) => (brandRefs.current[i] = el)}
                 onClick={() => handleToggleBrand(i, b.name)}
-                className={`absolute flex items-center justify-center px-1 rounded-full shadow-2xl  border border-white/30 transition-all duration-400 cursor-pointer 
-                  ${active ? "ring-8 ring-purple/40" : ""}`}
+                className={`absolute flex items-center justify-center px-1 rounded-full shadow-2xl  border border-white/30 transition-all duration-400 
+                  ${active ? "ring-8 ring-purple/40" : ""}
+                 ${
+                   isLocked ? "cursor-not-allowed opacity-80" : "cursor-pointer"
+                 }
+`}
                 style={{
                   width: height * 0.3,
                   height: height * 0.3,
@@ -337,8 +351,8 @@ export default function BrandNetwork({
                   background: active
                     ? "rgba(190, 190, 255, 0.01)"
                     : "rgba(252, 252, 255, 0.13)",
-                  boxShadow: active 
-                    ? "0 0 40px rgba(29, 153, 255, 0.67)" 
+                  boxShadow: active
+                    ? "0 0 40px rgba(29, 153, 255, 0.67)"
                     : "0 0 15px rgba(0,0,0,0.2)",
                 }}
               >

@@ -13,12 +13,15 @@ import { getCountryName, getCountryOptions } from "../utils/countryHelpers";
 import BrandNetwork from "../components/BrandNetwork";
 import { BRAND_NAMES } from "../data/brands";
 import { useParams } from "react-router-dom";
+import { getBrandFromBranchSlug } from "../utils/branchHelpers";
+import { branches } from "../data/branches";
 
 const HomePage = () => {
-  const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  // const baseURL = "http://localhost:5000";
-  const { activeBrandName } = useParams();
+  // const baseURL = "https://gtex-sms-verification-server.vercel.app";
+  const baseURL = import.meta.env.VITE_API_URL;
+  const { activeBranchName } = useParams();
 
+  console.log("active brands name(from url):", activeBranchName);
   const initialFields = {
     brands: [],
     gender: "",
@@ -53,6 +56,7 @@ const HomePage = () => {
   const [infoMessage, setInfoMessage] = useState("");
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
+  const [lockedBrand, setLockedBrand] = useState(null);
 
   const fieldRefs = {
     brands: React.useRef(null),
@@ -77,11 +81,27 @@ const HomePage = () => {
   // };
 
   useEffect(() => {
-    setFieldsData((prev) => ({ ...prev, branch: activeBrandName }));
-  }, [activeBrandName]);
+    if (!activeBranchName) return;
 
-  console.log(fieldsData.brands);
+    const branch = branches.find((b) => b.name === activeBranchName);
+    if (!branch?.brand) return;
+
+    const activeBrandTimeout = setTimeout(() => {
+      setFieldsData((prev) => ({
+        ...prev,
+        branch: activeBranchName,
+        brands: [branch.brand],
+      }));
+
+      setLockedBrand(branch.brand); // 🔒 LOCK IT
+    }, 2500);
+
+    return () => clearTimeout(activeBrandTimeout);
+  }, [activeBranchName]);
+
   const toggleBrandFromNetwork = (name) => {
+    if (lockedBrand === name) return;
+
     setFieldsData((prev) => ({
       ...prev,
       brands: prev.brands.includes(name)
@@ -91,10 +111,28 @@ const HomePage = () => {
   };
 
   const toggleAllFromNetwork = () => {
-    setFieldsData((prev) => ({
-      ...prev,
-      brands: prev.brands.length === BRAND_NAMES.length ? [] : [...BRAND_NAMES],
-    }));
+    setFieldsData((prev) => {
+      // If locked brand exists, always keep it
+      if (lockedBrand) {
+        const allExceptLocked = BRAND_NAMES.filter((b) => b !== lockedBrand);
+
+        const isAllSelected = prev.brands.length === BRAND_NAMES.length;
+
+        return {
+          ...prev,
+          brands: isAllSelected
+            ? [lockedBrand] // only locked survives
+            : [lockedBrand, ...allExceptLocked],
+        };
+      }
+
+      // normal behavior if no lock
+      return {
+        ...prev,
+        brands:
+          prev.brands.length === BRAND_NAMES.length ? [] : [...BRAND_NAMES],
+      };
+    });
   };
 
   useEffect(() => {
@@ -181,6 +219,7 @@ const HomePage = () => {
       setIsVerified(false);
       setOtpHash("");
       setToggleCode(false);
+      setCooldown(0); // ✅ RESET cooldown
       setFieldsData((prev) => ({ ...prev, verificationCode: "" }));
       setInfoMessage("");
     }
@@ -190,6 +229,7 @@ const HomePage = () => {
       setIsVerified(false);
       setOtpHash("");
       setToggleCode(false);
+      setCooldown(0); // ✅ RESET cooldown
       setFieldsData((prev) => ({
         ...prev,
         verificationCode: "",
@@ -263,7 +303,7 @@ const HomePage = () => {
       }
 
       // VALID — show info message
-      setInfoMessage(`${t("verificationCodeSent")} ${formattedPhone}`);
+      setInfoMessage("");
       setErrors((prev) => ({
         ...prev,
         verificationCode: undefined,
@@ -287,15 +327,21 @@ const HomePage = () => {
           phoneNumber:
             data.error === "Invalid Code"
               ? t("invalidCode")
+              : data.error === "Phone number already registered"
+              ? t("PhoneNumberAlreadyRegistered")
               : t("couldNotSendCode"),
         }));
         console.error("OTP send error:", data.error);
+        setInfoMessage("");
+
         return;
       }
 
       setOtpHash(data.hash);
       setToggleCode(true);
       setCooldown(60); // Start 60-second cooldown ONLY when OTP sent successfully
+
+      setInfoMessage(`${t("verificationCodeSent")} ${formattedPhone}`);
 
       // alert("კოდი გაიგზავნა");
     } catch (err) {
@@ -400,7 +446,12 @@ const HomePage = () => {
       newErrors.lastName = t("PleaseEnterYourLastName");
     if (!fieldsData.dateOfBirth)
       newErrors.dateOfBirth = t("PleaseEnterYourBirthDate");
-    if (fieldsData.city === null || fieldsData.city === undefined)
+    console.log("----", fieldsData.city);
+    if (
+      fieldsData.city === null ||
+      fieldsData.city === undefined ||
+      fieldsData.city === ""
+    )
       newErrors.city = t("PleaseEnterYourCity");
     if (fieldsData.country === null || fieldsData.country === undefined)
       newErrors.country = t("PleaseEnterYourCountry");
@@ -636,6 +687,7 @@ const HomePage = () => {
                   </div>
                   <BrandNetwork
                     selectedBrands={fieldsData.brands}
+                    lockedBrand={lockedBrand}
                     onToggleBrand={toggleBrandFromNetwork}
                     onToggleAll={toggleAllFromNetwork}
                   />

@@ -73,5 +73,6 @@
   "couldNotSendCode": "Failed to send code",
   "validCode": "Code verified",
   "networkError": "Network error. Please try again.",
-  "unexpectedError": "An unexpected error occurred. Please try again."
+  "unexpectedError": "An unexpected error occurred. Please try again.",
+  "PhoneNumberAlreadyRegistered": "Phone number already registered."
 }
