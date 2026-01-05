@@ -349,10 +349,10 @@ export default function BrandNetwork({
                   willChange: "transform",
                   "--index": i,
                   background: active
-                    ? "rgba(190, 190, 255, 0.01)"
+                    ? "rgba(19, 139, 252, 0.2)"
                     : "rgba(252, 252, 255, 0.13)",
                   boxShadow: active
-                    ? "0 0 40px rgba(29, 153, 255, 0.67)"
+                    ? "0 0 25px rgba(0, 89, 255, 0.6)"
                     : "0 0 15px rgba(0,0,0,0.2)",
                 }}
               >

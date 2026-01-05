@@ -75,5 +75,9 @@
   "validCode": "კოდი დადასტურდა",
   "networkError": "ქსელის შეცდომა. გთხოვთ, სცადეთ თავიდან.",
   "unexpectedError": "გაუთვალისწინებელი შეცდომა. სცადეთ თავიდან.",
-  "PhoneNumberAlreadyRegistered": "ნომერი უკვე დარეგისტრირებულია"
+  "PhoneNumberAlreadyRegistered": "ნომერი უკვე დარეგისტრირებულია",
+  "YouMustBeAtLeast14": "თქვენ მინიმუმ 14 წლის უნდა იყოთ",
+    "day": "დღე",
+  "month": "თვე",
+  "year": "წელი"
 }

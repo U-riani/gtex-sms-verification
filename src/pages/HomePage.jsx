@@ -16,6 +16,56 @@ import { useParams } from "react-router-dom";
 import { getBrandFromBranchSlug } from "../utils/branchHelpers";
 import { branches } from "../data/branches";
 
+const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
+
+export const MONTHS = {
+  en: [
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
+  ],
+  ka: [
+    { value: 1, label: "იანვარი" },
+    { value: 2, label: "თებერვალი" },
+    { value: 3, label: "მარტი" },
+    { value: 4, label: "აპრილი" },
+    { value: 5, label: "მაისი" },
+    { value: 6, label: "ივნისი" },
+    { value: 7, label: "ივლისი" },
+    { value: 8, label: "აგვისტო" },
+    { value: 9, label: "სექტემბერი" },
+    { value: 10, label: "ოქტომბერი" },
+    { value: 11, label: "ნოემბერი" },
+    { value: 12, label: "დეკემბერი" },
+  ],
+  ru: [
+    { value: 1, label: "Январь" },
+    { value: 2, label: "Февраль" },
+    { value: 3, label: "Март" },
+    { value: 4, label: "Апрель" },
+    { value: 5, label: "Май" },
+    { value: 6, label: "Июнь" },
+    { value: 7, label: "Июль" },
+    { value: 8, label: "Август" },
+    { value: 9, label: "Сентябрь" },
+    { value: 10, label: "Октябрь" },
+    { value: 11, label: "Ноябрь" },
+    { value: 12, label: "Декабрь" },
+  ],
+};
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i);
+
 const HomePage = () => {
   // const baseURL = "https://gtex-sms-verification-server.vercel.app";
   const baseURL = import.meta.env.VITE_API_URL;
@@ -27,7 +77,9 @@ const HomePage = () => {
     gender: "",
     firstName: "",
     lastName: "",
-    dateOfBirth: "",
+    birthDay: "",
+    birthMonth: "",
+    birthYear: "",
     country: "", // via ReusableSearchSelect
     city: "", // via ReusableSearchSelect
     email: "",
@@ -356,6 +408,22 @@ const HomePage = () => {
     }
   };
 
+  const isAtLeast14 = (day, month, year) => {
+    if (!day || !month || !year) return false;
+
+    const birthDate = new Date(year, month - 1, day);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age >= 14;
+  };
+
   const handleVerifyCode = async (e) => {
     e.preventDefault();
 
@@ -444,9 +512,7 @@ const HomePage = () => {
       newErrors.firstName = t("PleaseEnterYourFirstName");
     if (!fieldsData.lastName.trim())
       newErrors.lastName = t("PleaseEnterYourLastName");
-    if (!fieldsData.dateOfBirth)
-      newErrors.dateOfBirth = t("PleaseEnterYourBirthDate");
-    console.log("----", fieldsData.city);
+
     if (
       fieldsData.city === null ||
       fieldsData.city === undefined ||
@@ -466,6 +532,19 @@ const HomePage = () => {
       newErrors.phoneNumber = t("PleaseEnterYourMobile");
     } else if (!isValidPhoneLength(fieldsData.phoneNumber)) {
       newErrors.phoneNumber = t("PleaseEnterValidMobile");
+    }
+
+    // age validation
+    const { birthDay, birthMonth, birthYear } = fieldsData;
+    const formattedBirthDate = `${birthYear}-${String(birthMonth).padStart(
+      2,
+      "0"
+    )}-${String(birthDay).padStart(2, "0")}`;
+
+    if (!birthDay || !birthMonth || !birthYear) {
+      newErrors.dateOfBirth = t("PleaseEnterYourBirthDate");
+    } else if (!isAtLeast14(birthDay, birthMonth, birthYear)) {
+      newErrors.dateOfBirth = t("YouMustBeAtLeast14");
     }
 
     // VERIFICATION CHECK
@@ -514,7 +593,7 @@ const HomePage = () => {
           gender: fieldsData.gender,
           firstName: fieldsData.firstName.trim(),
           lastName: fieldsData.lastName.trim(),
-          dateOfBirth: fieldsData.dateOfBirth,
+          dateOfBirth: formattedBirthDate,
           country: getCountryName(countries, fieldsData.country, "en"),
           city: getCountryName(regions, fieldsData.city, "en"),
           email: fieldsData.email.trim() || null,
@@ -585,6 +664,12 @@ const HomePage = () => {
               </button>
             </div>
             <div className="">
+              {fieldsData.brands.length > 0 && fieldsData.brands.map((el,i) => {
+                return (
+
+                  <span key={i} className="text-gray-900 font-semibold">{el}, </span>
+                )
+              })}
               <ol type="1" className="flex flex-col gap-1 mb-2">
                 <li>
                   <span>1. </span>
@@ -889,29 +974,72 @@ const HomePage = () => {
                   className="flex flex-col gap-2"
                   ref={fieldRefs.dateOfBirth}
                 >
-                  <label
-                    htmlFor="dateOfBirth"
-                    className="text-[#242223] font-bold"
-                  >
+                  <label className="text-[#242223] font-bold">
                     {t("birthDate")} *
                   </label>
+
                   {errors.dateOfBirth && (
-                    <p className="text-red-600 text-sm">
-                      {t("PleaseEnterYourBirthDate")}
-                    </p>
+                    <p className="text-red-600 text-sm">{errors.dateOfBirth}</p>
                   )}
 
-                  <input
-                    id="dateOfBirth"
-                    className="border rounded px-2 py-1 border-gray-400 text-[#242223] cursor-pointer"
-                    name="dateOfBirth"
-                    type="date"
-                    value={fieldsData.dateOfBirth}
-                    onChange={handleChange}
-                    onClick={(e) =>
-                      e.target.showPicker && e.target.showPicker()
-                    }
-                  />
+                  <div className="flex gap-3">
+                    {/* Day */}
+                    <select
+                      value={fieldsData.birthDay}
+                      onChange={(e) =>
+                        setFieldsData((p) => ({
+                          ...p,
+                          birthDay: e.target.value,
+                        }))
+                      }
+                      className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
+                    >
+                      <option value="">{t("day")}</option>
+                      {DAYS.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Month */}
+                    <select
+                      value={fieldsData.birthMonth}
+                      onChange={(e) =>
+                        setFieldsData((p) => ({
+                          ...p,
+                          birthMonth: e.target.value,
+                        }))
+                      }
+                      className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
+                    >
+                      <option value="">{t("month")}</option>
+                      {MONTHS[i18n.language].map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Year */}
+                    <select
+                      value={fieldsData.birthYear}
+                      onChange={(e) =>
+                        setFieldsData((p) => ({
+                          ...p,
+                          birthYear: e.target.value,
+                        }))
+                      }
+                      className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
+                    >
+                      <option value="">{t("year")}</option>
+                      {YEARS.map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="flex flex-row  gap-5">

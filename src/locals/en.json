@@ -74,5 +74,9 @@
   "validCode": "Code verified",
   "networkError": "Network error. Please try again.",
   "unexpectedError": "An unexpected error occurred. Please try again.",
-  "PhoneNumberAlreadyRegistered": "Phone number already registered."
+  "PhoneNumberAlreadyRegistered": "Phone number already registered.",
+  "YouMustBeAtLeast14": "You must be at least 14 years old",
+  "day": "DAY",
+  "month": "MONTH",
+  "year": "YEAR"
 }
