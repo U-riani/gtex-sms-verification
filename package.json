@@ -9,9 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
- "dependencies": {
+  "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.1.1",
+    "country-flag-icons": "^1.6.4",
     "i18next": "^25.7.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -15,6 +15,7 @@ import { BRAND_NAMES } from "../data/brands";
 import { useParams } from "react-router-dom";
 import { getBrandFromBranchSlug } from "../utils/branchHelpers";
 import { branches } from "../data/branches";
+import PhonePrefixSelect from "../components/PhonePrefixSelect";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
@@ -109,6 +110,8 @@ const HomePage = () => {
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [lockedBrand, setLockedBrand] = useState(null);
+
+  const phoneInputRef = React.useRef(null);
 
   const fieldRefs = {
     brands: React.useRef(null),
@@ -231,21 +234,26 @@ const HomePage = () => {
   };
 
   const normalizePhone = (raw = "", prefix = "+995") => {
-    const numericPrefix = prefix.replace(/[^0-9]/g, "");
-    const cleaned = raw.replace(/[^0-9]/g, "");
-
+    const cleaned = raw.replace(/\D/g, "");
     if (!cleaned) return "";
 
-    // If user already typed full number (e.g. 9955xxxx)
-    if (cleaned.startsWith(numericPrefix)) {
-      return cleaned;
+    const numericPrefix = prefix.replace(/\D/g, "");
+
+    // 🇬🇪 Georgia: strict rule
+    if (numericPrefix === "995") {
+      // UI already enforces leading 5
+      return numericPrefix + cleaned.slice(0, 9);
     }
 
-    // Remove leading 0 (0555 → 555)
-    let local = cleaned;
-    if (local.startsWith("0")) local = local.slice(1);
+    // 🌍 Other countries: trim to global max
+    const trimmed = cleaned.slice(0, GLOBAL_MAX_DIGITS);
 
-    return numericPrefix + local;
+    // avoid double-prefix
+    if (trimmed.startsWith(numericPrefix)) {
+      return trimmed;
+    }
+
+    return numericPrefix + trimmed;
   };
 
   const handleShowTerms = (e) => {
@@ -492,7 +500,7 @@ const HomePage = () => {
       setVerifyingCode(false);
     }
   };
-
+  console.log(fieldsData.prefix, "----", fieldsData.phoneNumber);
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("SUBMIT FIRED");
@@ -619,6 +627,88 @@ const HomePage = () => {
       setLoading(false);
     }
   };
+  const GLOBAL_MAX_DIGITS = 15;
+
+  const getCursorPosFromDigits = (digitsLength, mask) => {
+    let pos = 0;
+    let digitsSeen = 0;
+
+    for (let i = 0; i < mask.length; i++) {
+      if (mask[i] === "X") {
+        if (digitsSeen === digitsLength) break;
+        digitsSeen++;
+      }
+      pos++;
+    }
+
+    return pos;
+  };
+
+  const getPhoneMaskByPrefix = (prefix) => {
+    switch (prefix) {
+      case "+995":
+        return {
+          mask: "XXX XX XX XX",
+          maxDigits: 9, // local Georgian number
+        };
+
+      default:
+        return {
+          mask: "XXXXXXXXXXXXXXX",
+          maxDigits: GLOBAL_MAX_DIGITS,
+        };
+    }
+  };
+
+  const maskNumber = (digits = "", mask = "") => {
+    let result = "";
+    let i = 0;
+
+    for (const char of mask) {
+      if (char === "X") {
+        result += digits[i] ?? "X";
+        i++;
+      } else {
+        result += char;
+      }
+    }
+
+    return result;
+  };
+  const { mask, maxDigits } = getPhoneMaskByPrefix(fieldsData.prefix);
+
+  useEffect(() => {
+    const el = phoneInputRef.current;
+    if (!el) return;
+
+    const cursorPos = getCursorPosFromDigits(
+      fieldsData.phoneNumber.length,
+      mask
+    );
+
+    requestAnimationFrame(() => {
+      el.setSelectionRange(cursorPos, cursorPos);
+    });
+  }, [fieldsData.phoneNumber, mask]);
+
+  useEffect(() => {
+    setFieldsData((prev) => {
+      // 🇬🇪 Georgia: enforce leading 5
+      if (fieldsData.prefix === "+995") {
+        if (!prev.phoneNumber.startsWith("5")) {
+          return { ...prev, phoneNumber: "5" + prev.phoneNumber };
+        }
+        return prev;
+      }
+
+      // 🌍 Other countries: remove forced Georgian 5
+      if (prev.phoneNumber.startsWith("5")) {
+        return { ...prev, phoneNumber: prev.phoneNumber.slice(1) };
+      }
+
+      return prev;
+    });
+  }, [fieldsData.prefix]);
 
   return (
     <div className="relative ">
@@ -664,12 +754,14 @@ const HomePage = () => {
               </button>
             </div>
             <div className="">
-              {fieldsData.brands.length > 0 && fieldsData.brands.map((el,i) => {
-                return (
-
-                  <span key={i} className="text-gray-900 font-semibold">{el}, </span>
-                )
-              })}
+              {fieldsData.brands.length > 0 &&
+                fieldsData.brands.map((el, i) => {
+                  return (
+                    <span key={i} className="text-gray-900 font-semibold">
+                      {el},{" "}
+                    </span>
+                  );
+                })}
               <ol type="1" className="flex flex-col gap-1 mb-2">
                 <li>
                   <span>1. </span>
@@ -1138,7 +1230,7 @@ const HomePage = () => {
                     <p className="text-red-600 text-sm">{errors.phoneNumber}</p>
                   )}
                   <div className="flex gap-4">
-                    <select
+                    {/* <select
                       className="text-[#242223] border px-1 py-1 rounded border-gray-400 cursor-pointer"
                       value={fieldsData.prefix || "+995"}
                       onChange={(e) =>
@@ -1149,18 +1241,83 @@ const HomePage = () => {
                     >
                       {phonePrefixes.map((p) => (
                         <option key={`${p.code}-${p.country}`} value={p.code}>
-                          {p.country} {p.code}
+                          {getFlagEmoji(p.country)} {p.code}
                         </option>
                       ))}
-                    </select>
+                    </select> */}
+                    <PhonePrefixSelect
+                      value={fieldsData.prefix}
+                      onChange={(code) =>
+                        setFieldsData((prev) => ({ ...prev, prefix: code }))
+                      }
+                    />
+
                     <input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      type="Tel"
+                      ref={phoneInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      spellCheck={false}
                       className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
-                      placeholder="ex: 555 12 34 56"
-                      value={fieldsData.phoneNumber}
-                      onChange={handleChange}
+                      value={maskNumber(fieldsData.phoneNumber, mask)}
+                      onKeyDown={(e) => {
+                        const allowedKeys = [
+                          "Backspace",
+                          "Tab",
+                          "ArrowLeft",
+                          "ArrowRight",
+                          "Delete",
+                        ];
+
+                        // BACKSPACE (single source of truth)
+                        if (e.key === "Backspace") {
+                          e.preventDefault();
+                          setFieldsData((prev) => {
+                            // 🇬🇪 Protect mandatory leading 5
+                            if (
+                              prev.prefix === "+995" &&
+                              prev.phoneNumber.length <= 1
+                            ) {
+                              return prev;
+                            }
+                            return {
+                              ...prev,
+                              phoneNumber: prev.phoneNumber.slice(0, -1),
+                            };
+                          });
+                          return;
+                        }
+
+                        // Other control keys
+                        if (allowedKeys.includes(e.key)) {
+                          return;
+                        }
+
+                        // Digits only
+                        if (!/^[0-9]$/.test(e.key)) {
+                          e.preventDefault();
+                          return;
+                        }
+
+                        // Add digit
+                        e.preventDefault();
+                        setFieldsData((prev) => {
+                          if (prev.phoneNumber.length >= maxDigits) return prev;
+                          return {
+                            ...prev,
+                            phoneNumber: prev.phoneNumber + e.key,
+                          };
+                        });
+                      }}
+                      onFocus={(e) => {
+                        requestAnimationFrame(() => {
+                          const cursorPos = getCursorPosFromDigits(
+                            fieldsData.phoneNumber.length,
+                            mask
+                          );
+                          e.target.setSelectionRange(cursorPos, cursorPos);
+                        });
+                      }}
                     />
                   </div>
                 </div>

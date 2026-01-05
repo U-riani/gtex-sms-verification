@@ -326,7 +326,6 @@ export default function BrandNetwork({
           {brandsWithAngle.map((b, i) => {
             const active = selectedBrands.includes(b.name);
             const isLocked = lockedBrand === b.name;
-            console.log(lockedBrand);
             return (
               <button
                 type="button"

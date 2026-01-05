@@ -5,6 +5,8 @@ import { BrowserRouter } from "react-router-dom";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "./i18n";
+import "country-flag-icons/3x2/flags.css";
+
 config.autoAddCss = false;
 
 createRoot(document.getElementById("root")).render(
