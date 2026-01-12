@@ -6,23 +6,23 @@ const PhonePrefixSelect = ({ value, onChange }) => {
   const selected = phonePrefixes.find((p) => p.code === value);
 
   return (
-    <div className="relative w-32 overflox-y-auto">
+    <div className="relative w-30 md:w-32 overflox-y-auto">
       {/* Selected */}
       <div
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 border px-2 py-1 rounded cursor-pointer bg-white"
+        className="flex items-center gap-2 border border-[#242223]/40  px-2 py-1 rounded cursor-pointer bg-white/0 hover:bg-stone-50" 
       >
         <img
           className="w-5"
           src={`https://flagcdn.com/w20/${selected.country.toLocaleLowerCase()}.png`}
         />{" "}
         <span>{selected.country}</span>
-        <span>{selected.code}</span>
+        <span>{selected.code}</span>  
       </div>
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute top-full left-0 w-full bg-white border rounded shadow z-50">
+        <div className="absolute top-full left-0 w-full bg-white border border-[#242223]/40 rounded shadow z-50">
           <div className="relative h-50 overflow-y-auto">
             {phonePrefixes.map((p) => (
               <div

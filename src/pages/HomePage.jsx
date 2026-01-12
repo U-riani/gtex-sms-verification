@@ -16,6 +16,7 @@ import { useParams } from "react-router-dom";
 // import { getBrandFromBranchSlug } from "../utils/branchHelpers";
 import { branches } from "../data/branches";
 import PhonePrefixSelect from "../components/PhonePrefixSelect";
+import { buildTermsText } from "../utils/termsHelpers";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
@@ -73,11 +74,10 @@ const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i);
 
 const HomePage = () => {
-  // const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  const baseURL = import.meta.env.VITE_API_URL;
+  const baseURL = "https://gtex-sms-verification-server.vercel.app";
+  // const baseURL = import.meta.env.VITE_API_URL;
   const { activeBranchName } = useParams();
 
-  console.log("active brands name(from url):", activeBranchName);
   const initialFields = {
     brands: [],
     gender: "",
@@ -91,8 +91,8 @@ const HomePage = () => {
     email: "",
     phoneNumber: "",
     verificationCode: "",
-    promotionChanel1: true, // will be "true" or "false"
-    promotionChanel2: true, // will be "true" or "false"
+    promotionChannelSms: true, // will be "true" or "false"
+    promotionChannelEmail: true, // will be "true" or "false"
     termsAccepted: false,
     branch: "",
     prefix: "+995",
@@ -103,7 +103,7 @@ const HomePage = () => {
   const { t, i18n } = useTranslation();
 
   const [showTerms, setShowTerms] = useState(false);
-  const [otpHash, setOtpHash] = useState("");
+  // const [otpHash, setOtpHash] = useState("");
   const [toggleCode, setToggleCode] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -115,6 +115,8 @@ const HomePage = () => {
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
   const [lockedBrand, setLockedBrand] = useState(null);
+
+  const [otpBrandsSnapshot, setOtpBrandsSnapshot] = useState([]);
 
   const phoneInputRef = React.useRef(null);
 
@@ -143,7 +145,9 @@ const HomePage = () => {
   useEffect(() => {
     if (!activeBranchName) return;
 
-    const branch = branches.find((b) => b.name === activeBranchName);
+    const branch = branches.find(
+      (b) => b.name.toLowerCase() === activeBranchName.toLowerCase()
+    );
     if (!branch?.brand) return;
 
     const activeBrandTimeout = setTimeout(() => {
@@ -159,6 +163,7 @@ const HomePage = () => {
     return () => clearTimeout(activeBrandTimeout);
   }, [activeBranchName]);
 
+  console.log("act branch", activeBranchName, lockedBrand);
   const toggleBrandFromNetwork = (name) => {
     if (lockedBrand === name) return;
 
@@ -276,7 +281,7 @@ const HomePage = () => {
 
   const resetOtpState = () => {
     setIsVerified(false);
-    setOtpHash("");
+    // setOtpHash("");
     setToggleCode(false);
     setCooldown(0);
     setInfoMessage("");
@@ -338,11 +343,13 @@ const HomePage = () => {
 
   const handleClear = () => {
     setFieldsData({ ...initialFields });
-    setOtpHash("");
+    // setOtpHash("");
     setIsVerified(false);
     setToggleCode(false);
     setCooldown(0);
     setInfoMessage("");
+    setErrors({});
+    setOtpBrandsSnapshot([]);
   };
 
   // ------------------- SEND OTP -------------------
@@ -363,6 +370,20 @@ const HomePage = () => {
           phoneNumber: t("PleaseEnterYourMobile"),
           verificationCode: t("PleaseEnterValidMobile"),
         }));
+        return;
+      }
+      console.log(44);
+      if (fieldsData.brands.length === 0) {
+        setErrors((prev) => ({
+          ...prev,
+          brands: t("pleaseSelectBrand"),
+          phoneNumber: t("PleaseEnterYourMobile"),
+          verificationCode: t("PleaseEnterValidMobile"),
+        }));
+        fieldRefs.brands.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
         return;
       }
 
@@ -400,7 +421,11 @@ const HomePage = () => {
       const res = await fetch(`${baseURL}/api/sms/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: formattedPhone, selectedBrands: fieldsData.brands}),
+        body: JSON.stringify({
+          phoneNumber: formattedPhone,
+          selectedBrands: fieldsData.brands,
+          language: i18n.language,
+        }),
       });
 
       const data = await res.json();
@@ -421,9 +446,10 @@ const HomePage = () => {
         return;
       }
 
-      setOtpHash(data.hash);
+      // setOtpHash(data.hash);
       setToggleCode(true);
       setCooldown(60); // Start 60-second cooldown ONLY when OTP sent successfully
+      setOtpBrandsSnapshot([...fieldsData.brands]); // 👈 SNAPSHOT
 
       setInfoMessage(`${t("verificationCodeSent")} ${formattedPhone}`);
 
@@ -491,8 +517,8 @@ const HomePage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phoneNumber: formattedPhone,
-          hash: otpHash,
           code: fieldsData.verificationCode,
+          brands: fieldsData.brands,
         }),
       });
 
@@ -502,7 +528,12 @@ const HomePage = () => {
         setIsVerified(true);
         setToggleCode(false);
         setCooldown(0);
+        setOtpBrandsSnapshot([...fieldsData.brands]); // 👈 SNAPSHOT
         setInfoMessage("");
+        setErrors((prev) => ({
+          ...prev,
+          verificationCode: undefined,
+        }));
         return;
       }
 
@@ -525,10 +556,23 @@ const HomePage = () => {
     }
   };
 
-  console.log(fieldsData.prefix, "----", fieldsData.phoneNumber);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (otpBrandsSnapshot.length) {
+      const same =
+        otpBrandsSnapshot.length === fieldsData.brands.length &&
+        otpBrandsSnapshot.every((b) => fieldsData.brands.includes(b));
+
+      if (!same) {
+        setErrors((prev) => ({
+          ...prev,
+          verificationCode: t("pleaseVerifyCode"),
+        }));
+        return;
+      }
+    }
+
     console.log("SUBMIT FIRED");
     console.log("termsAccepted:", fieldsData.termsAccepted);
 
@@ -618,7 +662,10 @@ const HomePage = () => {
         fieldsData.phoneNumber,
         fieldsData.prefix || "+995"
       );
-      console.log(fieldsData.branch);
+
+      const termsText = buildTermsText(t, fieldsData.brands);
+      const termsLanguage = i18n.language;
+
       const req = await fetch(`${baseURL}/api/users/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -631,11 +678,17 @@ const HomePage = () => {
           country: getCountryName(countries, fieldsData.country, "en"),
           city: getCountryName(regions, fieldsData.city, "en"),
           email: fieldsData.email.trim() || null,
-          phoneNumber: formattedPhone,
-          promotionChanel1: fieldsData.promotionChanel1,
-          promotionChanel2: fieldsData.promotionChanel2,
+          prefix: fieldsData.prefix,
+          phoneNumber: formattedPhone.replace(
+            fieldsData.prefix.replace(/\D/g, ""),
+            ""
+          ),
+          promotionChannelSms: fieldsData.promotionChannelSms,
+          promotionChannelEmail: fieldsData.promotionChannelEmail,
           termsAccepted: fieldsData.termsAccepted,
           branch: fieldsData.branch,
+          termsText,
+          termsLanguage,
         }),
       });
 
@@ -740,9 +793,41 @@ const HomePage = () => {
     resetOtpState();
   }, [fieldsData.phoneNumber, fieldsData.prefix]);
 
+  useEffect(() => {
+    if (!otpBrandsSnapshot.length) return;
+
+    const same =
+      otpBrandsSnapshot.length === fieldsData.brands.length &&
+      otpBrandsSnapshot.every((b) => fieldsData.brands.includes(b));
+
+    if (!same) {
+      resetOtpState();
+      setOtpBrandsSnapshot([]);
+      setErrors((prev) => ({
+        ...prev,
+        verificationCode: t("pleaseVerifyCode"),
+      }));
+    }
+  }, [fieldsData.brands]);
+
+  useEffect(() => {
+    const { birthDay, birthMonth, birthYear } = fieldsData;
+
+    if (!birthDay || !birthMonth || !birthYear) return;
+
+    const maxDay = getDaysInMonth(birthMonth, birthYear);
+
+    if (birthDay > maxDay) {
+      setFieldsData((prev) => ({
+        ...prev,
+        birthDay: maxDay,
+      }));
+    }
+  }, [fieldsData.birthMonth, fieldsData.birthYear]);
+
   return (
     <div className="relative ">
-      <LanguageButton />
+      {/* <LanguageButton /> */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-xl shadow-xl text-center max-w-sm w-full">
@@ -755,7 +840,10 @@ const HomePage = () => {
             </p>
             <button
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
-              onClick={() => setShowSuccessModal(false)}
+              onClick={() => {
+                setShowSuccessModal(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
             >
               OK
             </button>
@@ -842,7 +930,7 @@ const HomePage = () => {
       )}
       <div className="w-full bg-[#f8f9fa] py-4 sm:py-10 px-3">
         <div className="flex flex-col items-center ">
-          <div className="flex flex-col gap-5 md:gap-10 bg-cyan-100/10 rounded  p-5 sm:p-7  xl:p-10 border border-slate-300 rounded shadow-2xl">
+          <div className="flex flex-col gap-5 md:gap-10 bg-cyan-100/10 rounded p-3 md:p-5 sm:p-7  xl:p-10 border border-slate-300 rounded shadow-2xl">
             {/* <div className="flex justify-center items-center">
               <div>
                 <img
@@ -854,7 +942,7 @@ const HomePage = () => {
             </div> */}
             <div>
               <form
-                className="flex flex-col gap-4 bg-[#fff] font-Roboto w-full max-w-[800px] p-5 sm:p-7 xl:p-10 shadow-xl shadow-slate-900/30 border border-neutral-200 rounded "
+                className="flex flex-col gap-4 bg-[#fff] font-Roboto w-full max-w-[800px] p-3 md:p-5 sm:p-7 xl:p-10 shadow-xl shadow-slate-900/30 border border-neutral-200 rounded "
                 style={{
                   background: `
     linear-gradient(to bottom,
@@ -1107,6 +1195,7 @@ const HomePage = () => {
                   <div className="flex gap-3">
                     {/* Day */}
                     <select
+                    name="day-selection"
                       value={fieldsData.birthDay}
                       onChange={(e) =>
                         setFieldsData((p) => ({
@@ -1114,10 +1203,18 @@ const HomePage = () => {
                           birthDay: e.target.value,
                         }))
                       }
-                      className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
+                      className="border px-2 max-h-60 py-1 rounded flex-1 border-gray-400 text-[#242223]"
                     >
                       <option value="">{t("day")}</option>
-                      {DAYS.map((d) => (
+                      {Array.from(
+                        {
+                          length: getDaysInMonth(
+                            fieldsData.birthMonth,
+                            fieldsData.birthYear
+                          ),
+                        },
+                        (_, i) => i + 1
+                      ).map((d) => (
                         <option key={d} value={d}>
                           {d}
                         </option>
@@ -1178,14 +1275,6 @@ const HomePage = () => {
                       </p>
                     )}
 
-                    {/* <input
-                      id="country"
-                      name="country"
-                      type="text"
-                      className="border px-2 py-1 rounded flex-1"
-                      value={fieldsData.country}
-                      onChange={handleChange}
-                    /> */}
                     <ReusableSearchSelect
                       forElement="city"
                       options={getCountryOptions(regions, i18n.language)}
@@ -1260,21 +1349,6 @@ const HomePage = () => {
                     <p className="text-red-600 text-sm">{errors.phoneNumber}</p>
                   )}
                   <div className="flex gap-4">
-                    {/* <select
-                      className="text-[#242223] border px-1 py-1 rounded border-gray-400 cursor-pointer"
-                      value={fieldsData.prefix || "+995"}
-                      onChange={(e) =>
-                        handleChange({
-                          target: { name: "prefix", value: e.target.value },
-                        })
-                      }
-                    >
-                      {phonePrefixes.map((p) => (
-                        <option key={`${p.code}-${p.country}`} value={p.code}>
-                          {getFlagEmoji(p.country)} {p.code}
-                        </option>
-                      ))}
-                    </select> */}
                     <PhonePrefixSelect
                       value={fieldsData.prefix}
                       onChange={(code) => {
@@ -1289,8 +1363,9 @@ const HomePage = () => {
                       inputMode="numeric"
                       autoComplete="off"
                       spellCheck={false}
-                      className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
+                      className="border w-full px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
                       value={maskNumber(fieldsData.phoneNumber, mask)}
+                      onChange={() => {}}
                       onKeyDown={(e) => {
                         const allowedKeys = [
                           "Backspace",

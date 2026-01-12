@@ -66,16 +66,7 @@ const ReusableSearchSelect = ({
         value={query}
         onChange={(e) => handleInputChange(e.target.value)}
         onClick={() => setOpen(true)}
-        onBlur={() => {
-          const match = options.find(
-            (o) => o.label.toLowerCase() === query.toLowerCase()
-          );
-
-          if (!match) {
-            setQuery("");
-            onChange(null);
-          }
-        }}
+        
       />
 
       {open && (
