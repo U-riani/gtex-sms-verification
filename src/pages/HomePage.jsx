@@ -8,18 +8,23 @@ import LanguageButton from "../components/LanguageButton";
 import { regions } from "../data/regions";
 import { countries } from "../data/countries";
 // import { brands } from "../data/brands";
-import { phonePrefixes } from "../data/phoneNumberPrefixes";
+// import { phonePrefixes } from "../data/phoneNumberPrefixes";
 import { getCountryName, getCountryOptions } from "../utils/countryHelpers";
 import BrandNetwork from "../components/BrandNetwork";
 import { BRAND_NAMES } from "../data/brands";
 import { useParams } from "react-router-dom";
-import { getBrandFromBranchSlug } from "../utils/branchHelpers";
+// import { getBrandFromBranchSlug } from "../utils/branchHelpers";
 import { branches } from "../data/branches";
 import PhonePrefixSelect from "../components/PhonePrefixSelect";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
-export const MONTHS = {
+const getDaysInMonth = (month, year) => {
+  if (!month || !year) return 31;
+  return new Date(year, month, 0).getDate();
+};
+
+const MONTHS = {
   en: [
     { value: 1, label: "January" },
     { value: 2, label: "February" },
@@ -210,6 +215,10 @@ const HomePage = () => {
 
   const isValidPhoneLength = (raw) => {
     const cleaned = raw.replace(/[^0-9]/g, "");
+    console.log("cleaned phone number:", cleaned);
+    if (fieldsData.prefix === "+995" && cleaned.length !== 9) {
+      return false;
+    }
     return cleaned.length >= 6 && cleaned.length <= 15;
   };
 
@@ -265,6 +274,18 @@ const HomePage = () => {
     }
   };
 
+  const resetOtpState = () => {
+    setIsVerified(false);
+    setOtpHash("");
+    setToggleCode(false);
+    setCooldown(0);
+    setInfoMessage("");
+    setFieldsData((prev) => ({
+      ...prev,
+      verificationCode: "",
+    }));
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
@@ -274,28 +295,29 @@ const HomePage = () => {
       [name]: undefined,
     }));
 
-    // Reset OTP when phone changes
-    if (name === "phoneNumber") {
-      setIsVerified(false);
-      setOtpHash("");
-      setToggleCode(false);
-      setCooldown(0); // ✅ RESET cooldown
-      setFieldsData((prev) => ({ ...prev, verificationCode: "" }));
-      setInfoMessage("");
-    }
+    // // Reset OTP when phone changes
+    // if (name === "phoneNumber") {
+    //   setIsVerified(false);
+    //   setOtpHash("");
+    //   setToggleCode(false);
+    //   setCooldown(0); // ✅ RESET cooldown
+    //   setFieldsData((prev) => ({ ...prev, verificationCode: "" }));
+    //   setInfoMessage("");
+    //   resetOtpState();
+    // }
 
-    // Reset OTP when prefix changes
-    if (name === "prefix") {
-      setIsVerified(false);
-      setOtpHash("");
-      setToggleCode(false);
-      setCooldown(0); // ✅ RESET cooldown
-      setFieldsData((prev) => ({
-        ...prev,
-        verificationCode: "",
-      }));
-      setInfoMessage("");
-    }
+    // // Reset OTP when prefix changes
+    // if (name === "prefix") {
+    //   setIsVerified(false);
+    //   setOtpHash("");
+    //   setToggleCode(false);
+    //   setCooldown(0); // ✅ RESET cooldown
+    //   setFieldsData((prev) => ({
+    //     ...prev,
+    //     verificationCode: "",
+    //   }));
+    //   setInfoMessage("");
+    // }
 
     setFieldsData((prev) => ({
       ...prev,
@@ -353,7 +375,9 @@ const HomePage = () => {
         fieldsData.prefix || "+995"
       );
 
+      console.log("++++++++++++++", isValidPhoneLength(raw));
       if (!isValidPhoneLength(raw)) {
+        console.log("INVALID PHONE LENGTH");
         setErrors((prev) => ({
           ...prev,
           phoneNumber: t("PleaseEnterValidMobile"),
@@ -376,7 +400,7 @@ const HomePage = () => {
       const res = await fetch(`${baseURL}/api/sms/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumber: formattedPhone }),
+        body: JSON.stringify({ phoneNumber: formattedPhone, selectedBrands: fieldsData.brands}),
       });
 
       const data = await res.json();
@@ -500,7 +524,9 @@ const HomePage = () => {
       setVerifyingCode(false);
     }
   };
+
   console.log(fieldsData.prefix, "----", fieldsData.phoneNumber);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("SUBMIT FIRED");
@@ -689,7 +715,7 @@ const HomePage = () => {
     requestAnimationFrame(() => {
       el.setSelectionRange(cursorPos, cursorPos);
     });
-  }, [fieldsData.phoneNumber, mask]);
+  }, [fieldsData.phoneNumber]);
 
   useEffect(() => {
     setFieldsData((prev) => {
@@ -709,6 +735,10 @@ const HomePage = () => {
       return prev;
     });
   }, [fieldsData.prefix]);
+
+  useEffect(() => {
+    resetOtpState();
+  }, [fieldsData.phoneNumber, fieldsData.prefix]);
 
   return (
     <div className="relative ">
@@ -1247,13 +1277,14 @@ const HomePage = () => {
                     </select> */}
                     <PhonePrefixSelect
                       value={fieldsData.prefix}
-                      onChange={(code) =>
-                        setFieldsData((prev) => ({ ...prev, prefix: code }))
-                      }
+                      onChange={(code) => {
+                        setFieldsData((prev) => ({ ...prev, prefix: code }));
+                      }}
                     />
 
                     <input
                       ref={phoneInputRef}
+                      id="phoneNumber"
                       type="text"
                       inputMode="numeric"
                       autoComplete="off"
@@ -1310,6 +1341,15 @@ const HomePage = () => {
                         });
                       }}
                       onFocus={(e) => {
+                        requestAnimationFrame(() => {
+                          const cursorPos = getCursorPosFromDigits(
+                            fieldsData.phoneNumber.length,
+                            mask
+                          );
+                          e.target.setSelectionRange(cursorPos, cursorPos);
+                        });
+                      }}
+                      onClick={(e) => {
                         requestAnimationFrame(() => {
                           const cursorPos = getCursorPosFromDigits(
                             fieldsData.phoneNumber.length,

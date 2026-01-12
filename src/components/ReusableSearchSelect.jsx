@@ -10,7 +10,7 @@ const ReusableSearchSelect = ({
   const [query, setQuery] = useState(value || "");
   const [open, setOpen] = useState(false);
 
-  // Sync value from outside (important for reset)
+  // Sync external value (language change, reset, autofill)
   useEffect(() => {
     setQuery(value || "");
   }, [value]);
@@ -20,7 +20,7 @@ const ReusableSearchSelect = ({
     query.trim() === ""
       ? options
       : options.filter((item) =>
-          item.label.toLowerCase().startsWith(query.toLowerCase())
+          item.label.toLowerCase().includes(query.toLowerCase())
         );
 
   // Select item
@@ -30,23 +30,14 @@ const ReusableSearchSelect = ({
     setOpen(false);
   };
 
-  // On typing
   const handleInputChange = (val) => {
     setQuery(val);
+    setOpen(true);
 
-    const match = options.find(
-      (item) => item.label.toLowerCase() === val.toLowerCase()
-    );
-
-    if (match) {
-      onChange(match.id);
-    } else {
+    // Clear selection if input cleared
+    if (val.trim() === "") {
       onChange(null);
     }
-
-    setOpen(true);
-
-    setOpen(true);
   };
 
   // Close dropdown on outside click
@@ -66,24 +57,45 @@ const ReusableSearchSelect = ({
         id={forElement}
         name={forElement}
         type="text"
-        className="border px-3 py-2 rounded border-gray-400 w-full cursor-pointer "
+        autoComplete="new-password"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        className="border px-3 py-2 rounded border-gray-400 w-full cursor-pointer"
         placeholder="Select..."
         value={query}
         onChange={(e) => handleInputChange(e.target.value)}
         onClick={() => setOpen(true)}
+        onBlur={() => {
+          const match = options.find(
+            (o) => o.label.toLowerCase() === query.toLowerCase()
+          );
+
+          if (!match) {
+            setQuery("");
+            onChange(null);
+          }
+        }}
       />
 
       {open && (
         <div className="absolute top-full left-0 right-0 bg-white border rounded shadow-lg max-h-60 overflow-y-auto z-50">
           {filtered.length === 0 ? (
-            <p className="p-2 text-gray-500 text-sm">No matches...</p>
+            <p className="p-2 text-gray-500 text-sm">No matches…</p>
           ) : (
             filtered.map((item) => (
               <div
                 key={item.id}
                 onClick={() => handleSelect(item)}
-                className="p-2 cursor-pointer hover:bg-blue-100"
-              >
+                className="p-2 cursor-pointer hover:bg-blue-100 flex items-center"
+              > {console.log(item)}
+                {item.flag && (
+                  <img
+                    src={`https://flagcdn.com/w20/${item.flag.toLocaleLowerCase()}.png`}
+                    className=" mr-2 object-contain shadow-xs border border-slate-300"
+                    alt={`${item.label} flag`}
+                  />
+                )}
                 {item.label}
               </div>
             ))
