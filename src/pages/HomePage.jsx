@@ -17,6 +17,8 @@ import { useParams } from "react-router-dom";
 import { branches } from "../data/branches";
 import PhonePrefixSelect from "../components/PhonePrefixSelect";
 import { buildTermsText } from "../utils/termsHelpers";
+import ErrorModel from "../components/ErrorModel";
+import TermsCOmponent from "../components/TermsCOmponent";
 
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 
@@ -74,8 +76,8 @@ const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i);
 
 const HomePage = () => {
-  const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  // const baseURL = import.meta.env.VITE_API_URL;
+  // const baseURL = "https://gtex-sms-verification-server.vercel.app";
+  const baseURL = import.meta.env.VITE_API_URL;
   const { activeBranchName } = useParams();
 
   const initialFields = {
@@ -111,6 +113,8 @@ const HomePage = () => {
   // const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [sendingCode, setSendingCode] = useState(false);
   const [verifyingCode, setVerifyingCode] = useState(false);
@@ -163,7 +167,6 @@ const HomePage = () => {
     return () => clearTimeout(activeBrandTimeout);
   }, [activeBranchName]);
 
-  console.log("act branch", activeBranchName, lockedBrand);
   const toggleBrandFromNetwork = (name) => {
     if (lockedBrand === name) return;
 
@@ -220,7 +223,6 @@ const HomePage = () => {
 
   const isValidPhoneLength = (raw) => {
     const cleaned = raw.replace(/[^0-9]/g, "");
-    console.log("cleaned phone number:", cleaned);
     if (fieldsData.prefix === "+995" && cleaned.length !== 9) {
       return false;
     }
@@ -372,7 +374,6 @@ const HomePage = () => {
         }));
         return;
       }
-      console.log(44);
       if (fieldsData.brands.length === 0) {
         setErrors((prev) => ({
           ...prev,
@@ -396,9 +397,7 @@ const HomePage = () => {
         fieldsData.prefix || "+995"
       );
 
-      console.log("++++++++++++++", isValidPhoneLength(raw));
       if (!isValidPhoneLength(raw)) {
-        console.log("INVALID PHONE LENGTH");
         setErrors((prev) => ({
           ...prev,
           phoneNumber: t("PleaseEnterValidMobile"),
@@ -429,7 +428,6 @@ const HomePage = () => {
       });
 
       const data = await res.json();
-      console.log(data);
       if (!data.success) {
         setErrors((prev) => ({
           ...prev,
@@ -573,12 +571,8 @@ const HomePage = () => {
       }
     }
 
-    console.log("SUBMIT FIRED");
-    console.log("termsAccepted:", fieldsData.termsAccepted);
-
     // Manual validation
     const newErrors = {};
-    console.log(fieldsData);
     if (!fieldsData.brands || fieldsData.brands.length === 0) {
       newErrors.brands = t("chooseBrand");
     }
@@ -637,7 +631,6 @@ const HomePage = () => {
     }
 
     setErrors(newErrors);
-    console.log("Branch name", fieldsData.branch);
 
     // If errors exist → scroll to first one
     if (Object.keys(newErrors).length > 0) {
@@ -698,10 +691,12 @@ const HomePage = () => {
         handleClear();
         setShowSuccessModal(true);
       } else {
-        alert(resData.error);
+        setShowErrorModal(true);
       }
     } catch (err) {
       console.log(err.message);
+      setErrorMessage(err.message);
+      setShowErrorModal(true);
     } finally {
       setLoading(false);
     }
@@ -828,15 +823,21 @@ const HomePage = () => {
   return (
     <div className="relative ">
       {/* <LanguageButton /> */}
+      {showErrorModal && (
+        <ErrorModel
+          errorMessage={errorMessage}
+          setShowErrorModal={setShowErrorModal}
+        />
+      )}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
           <div className="bg-white p-8 rounded-xl shadow-xl text-center max-w-sm w-full">
             <div className="text-green-600 text-5xl mb-3">✔</div>
             <h3 className="text-xl  font-semibold mb-2">
-              გაგზავნა წარმატებულია
+              {t("successVerification")}
             </h3>
             <p className="text-gray-600 mb-6 text-sm">
-              თქვენი მონაცემები წარმატებით გაიგზავნა.
+              {t("dataSubmittedSuccessfully")}
             </p>
             <button
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
@@ -852,81 +853,7 @@ const HomePage = () => {
       )}
 
       {showTerms && (
-        <div
-          id="open-terms-container"
-          className="fixed w-full h-full z-10 flex justify-center bg-stone-900/30 p-3 sm:py-9"
-          onClick={handleShowTerms}
-        >
-          <div className="relative max-w-[900px] bg-[#fff] px-5 pb-5 overflow-y-scroll rounded">
-            <div className="flex flex-row justify-between bg-[#fff] py-5 sticky top-0">
-              <h4 className="text-xl capitalize font-bold ">
-                {t("termsAndConditions")}
-              </h4>
-              <button
-                type="button"
-                id="close-terms"
-                className="cursor-pointer p-3 -mt-3 -me-3"
-                onClick={handleShowTerms}
-              >
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-            <div className="">
-              {fieldsData.brands.length > 0 &&
-                fieldsData.brands.map((el, i) => {
-                  return (
-                    <span key={i} className="text-gray-900 font-semibold">
-                      {el},{" "}
-                    </span>
-                  );
-                })}
-              <ol type="1" className="flex flex-col gap-1 mb-2">
-                <li>
-                  <span>1. </span>
-                  {t("termsRule1")}
-                </li>
-                <li>
-                  <span>1.1 </span>
-                  {t("termsRule1_2")}
-                </li>
-                <li>
-                  <p>
-                    <span>2. </span>
-                    {t("termsRule2")}
-                  </p>
-                </li>
-                <li>
-                  <span>3. </span>
-                  {t("termsRule3")}
-                </li>
-                <li>
-                  <span>4. </span>
-                  {t("termsRule4")}
-                </li>
-                <li>
-                  <span>5. </span>
-                  {t("termsRule5")}
-                </li>
-                <li>
-                  <span>6. </span>
-                  {t("termsRule6")}
-                </li>
-                <li>
-                  <span>7. </span>
-                  {t("termsRule7")}
-                </li>
-                <li>
-                  <span>7.1 </span>
-                  {t("termsRule7_1")}
-                </li>
-                <li>
-                  <span>7.2 </span>
-                  {t("termsRule7_2")}
-                </li>
-              </ol>
-            </div>
-          </div>
-        </div>
+       <TermsCOmponent handleShowTerms={handleShowTerms} brands={fieldsData.brands}/>
       )}
       <div className="w-full bg-[#f8f9fa] py-4 sm:py-10 px-3">
         <div className="flex flex-col items-center ">
@@ -987,96 +914,7 @@ const HomePage = () => {
                     onToggleAll={toggleAllFromNetwork}
                   />
                 </div>
-                {/* <div className="flex flex-col gap-2">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-[#040037] font-bold">
-                      {t("chooseBrand")}: *
-                    </p>
-                    {errors.brands && (
-                      <p className="text-red-600 text-sm">
-                        {t("pleaseSelectBrand") ||
-                          "Please select at least one brand"}
-                      </p>
-                    )}
-                  </div>
-
-                  <div
-                    className="flex flex-row  justify-start items-center flex-wrap gap-3 max-w-lg"
-                    ref={fieldRefs.brands}
-                  >
-                    {brands.map((brand, i) => {
-                      const isActive = fieldsData.brands.includes(brand.id);
-
-                      return (
-                        <button
-                          key={brand.id}
-                          type="button"
-                          onClick={() => {
-                            setErrors((prev) => ({
-                              ...prev,
-                              brands: undefined,
-                            }));
-                            toggleBrand(brand.id);
-                          }}
-                          className={`px-4 py-2 text-sm font-medium transition-all border rounded cursor-pointer
-          ${
-            isActive
-              ? "bg-[#040037] text-white border-[#040037] shadow"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300 border-gray-400"
-          }
-        `}
-                        >
-                          {brand.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div> */}
-
-                {/* <div className="flex flex-col gap-2" ref={fieldRefs.gender}>
-                  <div>
-                    <p className="text-[#040037] font-bold">{t("gender")}: *</p>
-                    {errors.gender && (
-                      <p className="text-red-600 text-sm mt-1">
-                        {t("pleaseSelectGender") || "Please select gender"}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-row justify-around rounded border-gray-400 bg-transparent">
-                    {["female", "male"].map((g, i) => {
-                      const isActive = fieldsData.gender === g;
-
-                      return (
-                        <button
-                          key={g}
-                          type="button"
-                          onClick={() => {
-                            // Clear gender error immediately when user clicks
-                            setErrors((prev) => ({
-                              ...prev,
-                              gender: undefined,
-                            }));
-                            handleChange({
-                              target: { name: "gender", value: g },
-                            });
-                          }}
-                          className={`px-4 py-2 font-medium flex-1 cursor-pointer
-    border border-4 border-white/30
-    ${isActive ? "gender-btn-active bg-indigo-300/80" : ""}
-    ${i === 0 ? "rounded-l" : ""}
-    ${i === 1 ? "rounded-r" : ""}
-  `}
-                        >
-                          {g === "female"
-                            ? t("female")
-                            : g === "male"
-                            ? t("male")
-                            : t("other")}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div> */}
+                
                 <div className="flex flex-col gap-2" ref={fieldRefs.gender}>
                   <div>
                     <p className="text-[#242223] font-bold">{t("gender")}: *</p>
@@ -1184,9 +1022,7 @@ const HomePage = () => {
                   className="flex flex-col gap-2"
                   ref={fieldRefs.dateOfBirth}
                 >
-                  <label className="text-[#242223] font-bold">
-                    {t("birthDate")} *
-                  </label>
+                  <p className="text-[#242223] font-bold">{t("birthDate")} *</p>
 
                   {errors.dateOfBirth && (
                     <p className="text-red-600 text-sm">{errors.dateOfBirth}</p>
@@ -1195,7 +1031,7 @@ const HomePage = () => {
                   <div className="flex gap-3">
                     {/* Day */}
                     <select
-                    name="day-selection"
+                      name="day-selection"
                       value={fieldsData.birthDay}
                       onChange={(e) =>
                         setFieldsData((p) => ({
@@ -1223,6 +1059,7 @@ const HomePage = () => {
 
                     {/* Month */}
                     <select
+                      name="month-selection"
                       value={fieldsData.birthMonth}
                       onChange={(e) =>
                         setFieldsData((p) => ({
@@ -1242,6 +1079,7 @@ const HomePage = () => {
 
                     {/* Year */}
                     <select
+                      name="year-selection"
                       value={fieldsData.birthYear}
                       onChange={(e) =>
                         setFieldsData((p) => ({
@@ -1330,6 +1168,7 @@ const HomePage = () => {
                     id="email"
                     name="email"
                     type="email"
+                    autoComplete="off"
                     className="border px-2 py-1 rounded flex-1 border-gray-400 text-[#242223]"
                     value={fieldsData.email}
                     onChange={handleChange}
@@ -1533,6 +1372,7 @@ const HomePage = () => {
                   )}
                   <div className="flex flex-row items-center gap-2">
                     <input
+                      name="terms-accepted"
                       type="checkbox"
                       className="cursor-pointer"
                       checked={fieldsData.termsAccepted}

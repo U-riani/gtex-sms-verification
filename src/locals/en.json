@@ -44,7 +44,6 @@
   "getCode": "Code",
   "verify": "Verify",
 
-
   "termsRule1": "By agreeing to the Terms and Conditions, you grant permission to LLC GTEX, Reg. No. 205234744, Legal Address: Tbilisi, Mukhran Machavariani 4B, Actual Address: Tbilisi, Mukhran Machavariani 4B, Email: info@gtex.ge, to:",
   "termsRule1_2": "In accordance with the legislation, collect, store and process personal data for the purpose(s) defined in these Terms and Conditions.",
   "termsRule2": "Personal data is defined as:\nName\nPhone number\nPersonal ID number (if necessary)\nThe collection, storage and processing of personal data by LLC GTEX is carried out for marketing purposes, service improvement, sharing information with the customer and sending offers.",
@@ -78,5 +77,9 @@
   "YouMustBeAtLeast14": "You must be at least 14 years old",
   "day": "DAY",
   "month": "MONTH",
-  "year": "YEAR"
+  "year": "YEAR",
+  "successVerification": "Submission Successful",
+  "dataSubmittedSuccessfully": "Your information has been submitted successfully.",
+  "somethingWentWrong": "Something went wrong",
+  "pleaseTryAgain": "Please try again."
 }

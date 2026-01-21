@@ -78,5 +78,9 @@
   "YouMustBeAtLeast14": "Вам должно быть не менее 14 лет",
   "day": "ДЕНЬ",
   "month": "МЕСЯЦ",
-  "year": "ГОД"
+  "year": "ГОД",
+  "successVerification": " Отправка прошла успешно",
+  "dataSubmittedSuccessfully": " Ваши данные были успешно отправлены.",
+  "somethingWentWrong": "Произошла ошибка",
+  "pleaseTryAgain": "Пожалуйста, попробуйте снова."
 }
