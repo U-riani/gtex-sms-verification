@@ -49,7 +49,12 @@
   "termsRule2": "Personal data is defined as:\nName\nPhone number\nPersonal ID number (if necessary)\nThe collection, storage and processing of personal data by LLC GTEX is carried out for marketing purposes, service improvement, sharing information with the customer and sending offers.",
   "termsRule3": "Data storage/processing:\nThe user's personal data is stored in data repositories owned by LLC GTEX, which may be physical or cloud servers.\nLLC GTEX is the person responsible for data processing.",
   "termsRule4": "An authorized person may also be another company with which LLC GTEX has agreed on confidentiality obligations.",
-  "termsRule5": "By registering in the system, you agree that LLC GTEX, Reg. No. 205234744, may receive, store and process information related to offers, promotional content and direct marketing purposes.",
+
+  "termsRule5_start": "By registering in the system, you grant consent to \"GTEX LLC\", ID No. 205234744, to receive, store, and process information for the purposes of direct marketing, including information related to offers and promotional content, including",
+  "termsRule5_middle": " information about the following brand(s): ",
+  "termsRule5_optional": " information about the brand(s) selected by you",
+  "termsRule5_end": ", within which marketing communication may be carried out either by \"GTEX LLC\" or on behalf of, or in the name of, the mentioned brands.",
+
   "termsRule6": "The company is authorized to store the information collected under the Terms and Conditions for a period of 10 (ten) years.",
   "termsRule7": "The user has the right to request information at any time about their personal data stored by the company.",
   "termsRule7_1": "The user may submit a request via the LLC GTEX hotline: 0032 2 920 777 or in writing via email: info@gtex.ge.",

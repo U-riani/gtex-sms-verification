@@ -60,7 +60,19 @@ const TermsCOmponent = ({ handleShowTerms, brands }) => {
             </li>
             <li>
               <span>5. </span>
-              {t("termsRule5")}
+              {t("termsRule5_start")}
+              {brands.length > 0 && <span>{t("termsRule5_middle")}</span>}
+              {brands.length > 0
+                ? brands.map((el, i) => {
+                    return (
+                      <span key={i} className="text-gray-900 font-semibold">
+                        {el}
+                        {i < brands.length - 1 ? ", " : ""}
+                      </span>
+                    );
+                  })
+                : <span className="text-gray-900 font-semibold">{t("termsRule5_optional")}</span>}
+              <span >{t("termsRule5_end")}</span>
             </li>
             <li>
               <span>6. </span>

@@ -146,26 +146,26 @@ const HomePage = () => {
   //   }));
   // };
 
-  useEffect(() => {
-    if (!activeBranchName) return;
+  // useEffect(() => {
+  //   if (!activeBranchName) return;
 
-    const branch = branches.find(
-      (b) => b.name.toLowerCase() === activeBranchName.toLowerCase()
-    );
-    if (!branch?.brand) return;
+  //   const branch = branches.find(
+  //     (b) => b.name.toLowerCase() === activeBranchName.toLowerCase(),
+  //   );
+  //   if (!branch?.brand) return;
 
-    const activeBrandTimeout = setTimeout(() => {
-      setFieldsData((prev) => ({
-        ...prev,
-        branch: activeBranchName,
-        brands: [branch.brand],
-      }));
+  //   const activeBrandTimeout = setTimeout(() => {
+  //     setFieldsData((prev) => ({
+  //       ...prev,
+  //       branch: activeBranchName,
+  //       brands: [branch.brand],
+  //     }));
 
-      setLockedBrand(branch.brand); // 🔒 LOCK IT
-    }, 2500);
+  //     setLockedBrand(branch.brand); // 🔒 LOCK IT
+  //   }, 2500);
 
-    return () => clearTimeout(activeBrandTimeout);
-  }, [activeBranchName]);
+  //   return () => clearTimeout(activeBrandTimeout);
+  // }, [activeBranchName]);
 
   const toggleBrandFromNetwork = (name) => {
     if (lockedBrand === name) return;
@@ -176,6 +176,24 @@ const HomePage = () => {
         ? prev.brands.filter((b) => b !== name)
         : [...prev.brands, name],
     }));
+  };
+
+  const applyBranchFromUrl = (branchName) => {
+    if (!branchName) return;
+
+    const branch = branches.find(
+      (b) => b.name.toLowerCase() === branchName.toLowerCase(),
+    );
+
+    if (!branch?.brand) return;
+
+    setFieldsData((prev) => ({
+      ...prev,
+      branch: branchName,
+      brands: [branch.brand],
+    }));
+
+    setLockedBrand(branch.brand);
   };
 
   const toggleAllFromNetwork = () => {
@@ -220,6 +238,10 @@ const HomePage = () => {
 
     return () => clearInterval(timer);
   }, [cooldown]);
+
+  useEffect(() => {
+    applyBranchFromUrl(activeBranchName);
+  }, [activeBranchName]);
 
   const isValidPhoneLength = (raw) => {
     const cleaned = raw.replace(/[^0-9]/g, "");
@@ -394,7 +416,7 @@ const HomePage = () => {
       // Format to Georgian 995xxx
       let formattedPhone = normalizePhone(
         fieldsData.phoneNumber,
-        fieldsData.prefix || "+995"
+        fieldsData.prefix || "+995",
       );
 
       if (!isValidPhoneLength(raw)) {
@@ -435,8 +457,8 @@ const HomePage = () => {
             data.error === "Invalid Code"
               ? t("invalidCode")
               : data.error === "Phone number already registered"
-              ? t("PhoneNumberAlreadyRegistered")
-              : t("couldNotSendCode"),
+                ? t("PhoneNumberAlreadyRegistered")
+                : t("couldNotSendCode"),
         }));
         console.error("OTP send error:", data.error);
         setInfoMessage("");
@@ -507,7 +529,7 @@ const HomePage = () => {
     try {
       const formattedPhone = normalizePhone(
         fieldsData.phoneNumber,
-        fieldsData.prefix || "+995"
+        fieldsData.prefix || "+995",
       );
 
       const res = await fetch(`${baseURL}/api/sms/verify-otp`, {
@@ -610,7 +632,7 @@ const HomePage = () => {
     const { birthDay, birthMonth, birthYear } = fieldsData;
     const formattedBirthDate = `${birthYear}-${String(birthMonth).padStart(
       2,
-      "0"
+      "0",
     )}-${String(birthDay).padStart(2, "0")}`;
 
     if (!birthDay || !birthMonth || !birthYear) {
@@ -653,7 +675,7 @@ const HomePage = () => {
 
       const formattedPhone = normalizePhone(
         fieldsData.phoneNumber,
-        fieldsData.prefix || "+995"
+        fieldsData.prefix || "+995",
       );
 
       const termsText = buildTermsText(t, fieldsData.brands);
@@ -674,7 +696,7 @@ const HomePage = () => {
           prefix: fieldsData.prefix,
           phoneNumber: formattedPhone.replace(
             fieldsData.prefix.replace(/\D/g, ""),
-            ""
+            "",
           ),
           promotionChannelSms: fieldsData.promotionChannelSms,
           promotionChannelEmail: fieldsData.promotionChannelEmail,
@@ -689,6 +711,12 @@ const HomePage = () => {
 
       if (resData.success) {
         handleClear();
+
+        // 🔥 re-apply URL branch after reset
+        setTimeout(() => {
+          applyBranchFromUrl(activeBranchName);
+        }, 0);
+
         setShowSuccessModal(true);
       } else {
         setShowErrorModal(true);
@@ -757,7 +785,7 @@ const HomePage = () => {
 
     const cursorPos = getCursorPosFromDigits(
       fieldsData.phoneNumber.length,
-      mask
+      mask,
     );
 
     requestAnimationFrame(() => {
@@ -853,7 +881,10 @@ const HomePage = () => {
       )}
 
       {showTerms && (
-       <TermsCOmponent handleShowTerms={handleShowTerms} brands={fieldsData.brands}/>
+        <TermsCOmponent
+          handleShowTerms={handleShowTerms}
+          brands={fieldsData.brands}
+        />
       )}
       <div className="w-full bg-[#f8f9fa] py-4 sm:py-10 px-3">
         <div className="flex flex-col items-center ">
@@ -914,7 +945,7 @@ const HomePage = () => {
                     onToggleAll={toggleAllFromNetwork}
                   />
                 </div>
-                
+
                 <div className="flex flex-col gap-2" ref={fieldRefs.gender}>
                   <div>
                     <p className="text-[#242223] font-bold">{t("gender")}: *</p>
@@ -1046,10 +1077,10 @@ const HomePage = () => {
                         {
                           length: getDaysInMonth(
                             fieldsData.birthMonth,
-                            fieldsData.birthYear
+                            fieldsData.birthYear,
                           ),
                         },
-                        (_, i) => i + 1
+                        (_, i) => i + 1,
                       ).map((d) => (
                         <option key={d} value={d}>
                           {d}
@@ -1119,7 +1150,7 @@ const HomePage = () => {
                       value={getCountryName(
                         regions,
                         fieldsData.city,
-                        i18n.language
+                        i18n.language,
                       )}
                       onChange={(id) => {
                         setErrors((prev) => ({ ...prev, city: undefined }));
@@ -1145,7 +1176,7 @@ const HomePage = () => {
                     value={getCountryName(
                       countries,
                       fieldsData.country,
-                      i18n.language
+                      i18n.language,
                     )}
                     onChange={(id) => {
                       setErrors((prev) => ({ ...prev, country: undefined }));
@@ -1258,7 +1289,7 @@ const HomePage = () => {
                         requestAnimationFrame(() => {
                           const cursorPos = getCursorPosFromDigits(
                             fieldsData.phoneNumber.length,
-                            mask
+                            mask,
                           );
                           e.target.setSelectionRange(cursorPos, cursorPos);
                         });
@@ -1267,7 +1298,7 @@ const HomePage = () => {
                         requestAnimationFrame(() => {
                           const cursorPos = getCursorPosFromDigits(
                             fieldsData.phoneNumber.length,
-                            mask
+                            mask,
                           );
                           e.target.setSelectionRange(cursorPos, cursorPos);
                         });
@@ -1305,8 +1336,8 @@ const HomePage = () => {
                         isVerified
                           ? "border-green-500"
                           : errors.verificationCode
-                          ? "border-red-500"
-                          : "border-gray-400"
+                            ? "border-red-500"
+                            : "border-gray-400"
                       }`}
                     />
 
@@ -1326,8 +1357,8 @@ const HomePage = () => {
                         {sendingCode
                           ? t("sendingCode") || "Sending..."
                           : cooldown > 0
-                          ? `${t("resendIn")} (${cooldown})`
-                          : t("getCode")}
+                            ? `${t("resendIn")} (${cooldown})`
+                            : t("getCode")}
                       </button>
                     )}
 
