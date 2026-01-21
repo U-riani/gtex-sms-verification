@@ -316,7 +316,7 @@ export default function BrandNetwork({
             }}
           >
             <img
-              src="Gtex-logo.png"
+              src="/Gtex-logo.png"
               alt="All Brands"
               className="w-full h-full object-contain p-6 "
             />
@@ -356,7 +356,7 @@ export default function BrandNetwork({
                 }}
               >
                 <img
-                  src={b.image}
+                  src={`/${b.image}`}
                   alt={b.name}
                   className="w-full object-cover"
                 />
