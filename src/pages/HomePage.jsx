@@ -77,7 +77,8 @@ const YEARS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i);
 
 const HomePage = () => {
   // const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  const baseURL = import.meta.env.VITE_API_URL;
+  const baseURL = "https://gtex-sms-verification-server-git-v4-u-rianis-projects.vercel.app";
+  // const baseURL = import.meta.env.VITE_API_URL;
   const { activeBranchName } = useParams();
 
   const initialFields = {
@@ -196,6 +197,16 @@ const HomePage = () => {
     setLockedBrand(branch.brand);
   };
 
+  const applyBranchWithDelay = (branchName, delay = 250) => {
+    if (!branchName) return;
+
+    const timeout = setTimeout(() => {
+      applyBranchFromUrl(branchName);
+    }, delay);
+
+    return () => clearTimeout(timeout);
+  };
+
   const toggleAllFromNetwork = () => {
     setFieldsData((prev) => {
       // If locked brand exists, always keep it
@@ -240,7 +251,7 @@ const HomePage = () => {
   }, [cooldown]);
 
   useEffect(() => {
-    applyBranchFromUrl(activeBranchName);
+    return applyBranchWithDelay(activeBranchName, 2000);
   }, [activeBranchName]);
 
   const isValidPhoneLength = (raw) => {
@@ -366,7 +377,10 @@ const HomePage = () => {
   // };
 
   const handleClear = () => {
-    setFieldsData({ ...initialFields });
+    setFieldsData({
+      ...initialFields,
+      phoneNumber: initialFields.prefix === "+995" ? "5" : "",
+    });
     // setOtpHash("");
     setIsVerified(false);
     setToggleCode(false);
@@ -712,10 +726,7 @@ const HomePage = () => {
       if (resData.success) {
         handleClear();
 
-        // 🔥 re-apply URL branch after reset
-        setTimeout(() => {
-          applyBranchFromUrl(activeBranchName);
-        }, 0);
+        applyBranchWithDelay(activeBranchName, 2000);
 
         setShowSuccessModal(true);
       } else {
