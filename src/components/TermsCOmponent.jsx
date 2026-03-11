@@ -8,7 +8,7 @@ const TermsCOmponent = ({ handleShowTerms, brands }) => {
   return (
     <div
       id="open-terms-container"
-      className="fixed w-full h-full z-10 flex justify-center bg-stone-900/30 p-3 sm:py-9"
+      className="fixed w-full h-full z-20 flex justify-center bg-stone-900/30 p-3 sm:py-9"
       onClick={handleShowTerms}
     >
       <div className="relative max-w-[900px] bg-[#fff] px-5 pb-5 overflow-y-scroll rounded">
@@ -26,15 +26,6 @@ const TermsCOmponent = ({ handleShowTerms, brands }) => {
           </button>
         </div>
         <div className="">
-          {brands.length > 0 &&
-            brands.map((el, i) => {
-              return (
-                <span key={i} className="text-gray-900 font-semibold">
-                  {el}
-                  {i < brands.length - 1 ? ", " : ""}
-                </span>
-              );
-            })}
           <ol type="1" className="flex flex-col gap-1 mb-2">
             <li>
               <span>1. </span>
