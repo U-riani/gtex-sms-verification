@@ -77,7 +77,7 @@ const YEARS = Array.from({ length: 100 }, (_, i) => CURRENT_YEAR - i);
 
 const HomePage = () => {
   // const baseURL = "https://gtex-sms-verification-server.vercel.app";
-  const baseURL = "https://gtex-sms-verification-server-git-v4-u-rianis-projects.vercel.app";
+  const baseURL = "https://gtex-sms-verification-server.vercel.app";
   // const baseURL = import.meta.env.VITE_API_URL;
   const { activeBranchName } = useParams();
 
