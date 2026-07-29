@@ -169,6 +169,11 @@ export const branches = [
     name: "Terranova Tbilisi Central",
     brand: "Terranova",
   },
+   {
+    id: 34,
+    name: "Penti AgroHub",
+    brand: "Penti",
+  }
 ];
 
 // export const branches = [
