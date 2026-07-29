@@ -171,7 +171,7 @@ export const branches = [
   },
    {
     id: 34,
-    name: "Penti AgroHub",
+    name: "Penti Marjanishvili",
     brand: "Penti",
   }
 ];
